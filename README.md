@@ -26,9 +26,9 @@ Everything else follows from that: one file, no build step, system fonts only, a
 ---
 
 ## Demo
+### Main Card Import
 
-
-
+![Uploading indexhtml1.gif…]()
 
 ### The page
 
@@ -54,7 +54,8 @@ Everything else follows from that: one file, no build step, system fonts only, a
 │  4 · OUTPUT              │                                    │
 ├──────────────────────────┤                                    │
 │ 36 cards · 4 sheets      │                                    │
-│ value ~€214              │                                    │
+│ value ~€214           
+   │                                    │
 │ ▓▓▓▓ EXPORT PDF ▓▓▓▓     │                                    │
 └──────────────────────────┴────────────────────────────────────┘
 ```
