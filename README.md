@@ -1,12 +1,13 @@
+[README.md](https://github.com/user-attachments/files/31255277/README.md)
 <div align="center">
 
 # 🗿 Cardboard Golem
 
 **Assembled, not purchased.**
 
-Turn any Magic: The Gathering deck list into print-ready proxy sheets — at exactly 63 × 88 mm, from a single HTML file, with no install, no server, and no build step.
+Turn any Magic: The Gathering deck list — typed, pasted, dropped, or **scanned with your camera** — into print-ready proxy sheets at exactly 63 × 88 mm, from a single HTML file.
 
-[![No dependencies](https://img.shields.io/badge/dependencies-0-3FC7D8?style=flat-square)](#)
+[![Core dependencies](https://img.shields.io/badge/core%20dependencies-0-3FC7D8?style=flat-square)](#one-optional-dependency)
 [![Single file](https://img.shields.io/badge/files-1-3FC7D8?style=flat-square)](#)
 [![Works offline](https://img.shields.io/badge/offline-yes-6BD39A?style=flat-square)](#)
 [![License: MIT](https://img.shields.io/badge/license-MIT-E8B14C?style=flat-square)](LICENSE)
@@ -15,24 +16,13 @@ Turn any Magic: The Gathering deck list into print-ready proxy sheets — at exa
 
 ---
 
-# The two READMEs
-
-They're genuinely different documents, not one hedged compromise:
-
-|          | `README.md`                                            | `README-professional.md`                                        |
-| -------- | ------------------------------------------------------ | --------------------------------------------------------------- |
-| Audience | Players browsing GitHub                                 | Evaluators, contributors, enterprise                              |
-| Demo     | ASCII layout sketch + Mermaid flowchart + 4-step table  | Numbered procedure, no illustration                               |
-| Voice    | "an unreasonable amount of respect for millimetres"     | "Dimensional accuracy is non-negotiable"                          |
-| Extras   | Collapsible explainers, badges                          | TOC, architecture map, browser matrix, roadmap, security statement |
-
 ## Why this exists
 
-Proxy printers usually fail in the same two ways: the cards come out 4 % too small to sleeve alongside real ones, and the tool stops working the day its CDN goes down.
+Proxy printers usually fail in the same two ways: the cards come out a few percent too small to sleeve alongside real ones, and the tool stops working the day its CDN changes a URL.
 
 Cardboard Golem fixes both by refusing to trust the browser with your geometry. It writes its **own PDF**, byte by byte, with every card placed at exact millimetre coordinates. The page box is authoritative — no print dialog, no `@page` negotiation, and no "fit to page" checkbox gets a vote.
 
-Everything else follows from that: one file, zero dependencies, system fonts only, and an image cache that survives losing your internet connection.
+Everything else follows from that: one file, no build step, system fonts only, and a card cache that survives losing your internet connection.
 
 ---
 
@@ -45,18 +35,18 @@ Everything else follows from that: one file, zero dependencies, system fonts onl
 │  🗿 CARDBOARD GOLEM      │  Cards 36 · Sheets 4 · Grid 3×3    │
 ├──────────────────────────┼────────────────────────────────────┤
 │                          │                                    │
-│  1 · DECK LIST           │   ░░░░ cutting mat ░░░░░░░░░░░░    │
-│  ┌────────────────────┐📁│   ┌──────────────────────────┐     │
+│  1 · DECK LIST        📁 │   ░░░░ cutting mat ░░░░░░░░░░░░    │
+│  ┌────────────────────┐  │   ┌──────────────────────────┐     │
 │  │ 4 Lightning Bolt   │  │   │  ┌────┐ ┌────┐ ┌────┐    │     │
 │  │ 2 Ragavan (MH2)138 │  │   │  │    │ │    │ │    │    │     │
 │  └────────────────────┘  │   │  └────┘ └────┘ └────┘    │     │
 │  [ Import list ] [Clear] │   │  ┌────┐ ┌────┐ ┌────┐    │     │
-│                          │   │  │    │ │    │ │    │    │     │
+│                          │   │  │    │ │▓▓▓▓│ │    │    │     │
 │  2 · CARDS               │   │  └────┘ └────┘ └────┘    │     │
-│  🔍 Search any card…     │   │  ┌────┐ ┌────┐ ┌────┐    │     │
+│  🔍 Search any card…  📷 │   │  ┌────┐ ┌────┐ ┌────┐    │     │
 │  ┌──┐ Lightning Bolt     │   │  │    │ │    │ │    │    │     │
 │  │▨▨│ €1.20 ↑3% · MH2    │   │  └────┘ └────┘ └────┘    │     │
-│  └──┘  [−] 4 [+] ⊕ Art × │   └──────────────────────────┘     │
+│  └──┘ [−] 4 [+] ⊕ ⓘ Art×│   └──────────────────────────┘     │
 │                          │      ✂ crop marks · 100 mm ruler   │
 │  3 · SHEET SETUP         │                                    │
 │  4 · OUTPUT              │                                    │
@@ -71,8 +61,8 @@ Everything else follows from that: one file, zero dependencies, system fonts onl
 
 | | Do this | You get |
 |:--:|---|---|
-| **1** | Paste a deck list, drop a `.txt`, or search cards by name | Every card resolves against Scryfall |
-| **2** | Tune counts with `−/+`, swap art, add tokens with `⊕` | The preview redraws live on the mat |
+| **1** | Paste a list, drop a `.txt` 📁, search by name 🔍, or scan cards with the camera 📷 | Every card resolves against Scryfall |
+| **2** | Tune counts `−/+`, add tokens `⊕`, check rules `ⓘ`, swap art | The preview redraws live on the mat |
 | **3** | Pick paper, cut guides, image quality | Grid recalculates in real millimetres |
 | **4** | **Export PDF** → print at *Actual size* | 9 exact 63 × 88 mm cards per A4 sheet |
 
@@ -97,6 +87,8 @@ flowchart LR
     F -->|miss| G[Named placeholder<br/>sheet stays printable]
 ```
 
+If Scryfall ever answers with *"slow down"* instead of data, the app backs off, retries, and — if that fails — stops cleanly rather than hammering. Cards it never reached stay pending, so **Retry missing** picks up exactly where it left off.
+
 ---
 
 ## Features
@@ -108,19 +100,23 @@ flowchart LR
 - Crop marks, full cut lines, adjustable gap, safe margins, A4 & Letter in both orientations
 - A 100 mm calibration ruler on sheet 1, so you can prove your printer didn't cheat
 
-**Card resolution**
-- Reads Arena, Moxfield, MTGO and plain formats — plus bullets, tab-separated Excel dumps, counts written after the name, and stray BOM bytes
+**Getting cards in**
+- Reads Arena, Moxfield, MTGO and plain formats — plus bullets, tab-separated spreadsheet dumps, counts written after the name, and stray BOM bytes
 - Missing quantities default to `1`, so a messy list never fails
-- Five-tier fallback ladder ending in a printable placeholder, never a crash
-- Live autocomplete search across every Magic card ever printed
+- **Live search** across every Magic card ever printed, with keyboard navigation
+- **Camera scanning** in batch mode — scan a physical deck card after card without leaving the viewfinder
 
-**Beyond the basics**
-- **Token detection** — one tap adds every token a card creates, fetched by exact ID
-- **Price + trend** — EUR or USD, with ↑/↓ arrows the app builds from its own daily snapshots
-- **Dual art sources** — Scryfall printings and MPCFill community renders, side by side
+**Knowing what you've got**
+- **ⓘ Card rules** — Oracle text with rendered mana symbols, plain-English keyword explanations, and official rulings
+- **⊕ Token detection** — one tap adds every token a card creates, fetched by exact ID
+- **Prices + trends** — EUR or USD with ↑/↓ arrows the app builds from its own daily snapshots, plus total deck value
 - **Low-res warnings** — flags printings where Scryfall only has a poor scan, before you waste paper
+
+**Everything else**
+- **Dual art sources** — Scryfall printings and MPCFill community renders, side by side
 - **True offline** — card data and images cached in IndexedDB; reprint with the network unplugged
 - **Mobile-first** — 44 px tap targets, 16 px inputs (no iOS auto-zoom), thumb-reachable tab bar
+- **It's alive** — the golem breathes while idle and dissolves into a pixel wave while working
 
 ---
 
@@ -133,7 +129,7 @@ cd cardboard-golem
 
 Then double-click `index.html`. That's the whole installation.
 
-**Recommended:** serve it over localhost instead.
+**Strongly recommended:** serve it over localhost instead.
 
 ```bash
 python3 -m http.server 8000
@@ -143,11 +139,33 @@ python3 -m http.server 8000
 <details>
 <summary><strong>Why bother with a server for a local file?</strong></summary>
 
-Opening `index.html` from disk gives the page a `null` origin. Some browser and network combinations reject cross-site requests from that origin, which breaks the fast batch lookup and can block image caching. The app detects this and shows a clear message with instructions — but serving over `localhost` avoids it entirely and makes bulk imports noticeably faster.
+Opening `index.html` from disk gives the page a `null` origin, and that costs you three things:
+
+1. **The fast batch lookup breaks.** It needs a CORS preflight that a `null` origin loses, so a 100-card deck falls back to 100+ individual requests instead of 2. That's roughly 50× the traffic and makes rate limiting far more likely.
+2. **The camera is disabled entirely.** Browsers only allow camera access on HTTPS or `localhost`. A `file://` page can never use it — and neither can a LAN address like `http://192.168.1.50:8000`.
+3. **Image caching may be blocked**, which weakens offline support.
+
+The app detects all three and explains them in place, but serving over `localhost` avoids the whole category.
 
 </details>
 
-**Requirements:** any modern browser (Chrome, Edge, Firefox, Safari). No Node, no Python needed for the app itself, no package manager, no build.
+**Requirements:** any modern browser (Chrome, Edge, Firefox, Safari 16+). No Node, no package manager, no build.
+
+---
+
+## One optional dependency
+
+The core app has **zero runtime dependencies**. It loads no CDN, no webfont, no framework — open it with the network unplugged and everything works.
+
+There is exactly one exception. **Camera scanning downloads a text-recognition engine ([Tesseract.js](https://github.com/naptha/tesseract.js)) from jsDelivr the first time you press Scan.** Never before, and never at page load.
+
+Why the exception stays contained:
+
+- Scanning already requires a camera, a secure context, and a network connection. It cannot work offline regardless.
+- Nothing else in the app touches it. Deck import, PDF export, printing and the offline cache are unaffected.
+- If the download fails, the scanner still shows you an enlarged crop of the card name to read and type in yourself.
+
+If you want a genuinely dependency-free file, delete the `OCR_CDN` constant and the `kaynnistaWorker()` function in § 11. The camera keeps working as capture-and-read-manually.
 
 ---
 
@@ -169,7 +187,7 @@ Everything lives in the app UI and persists to `localStorage`. Sensible defaults
 | Both faces | On | Print the back of double-faced cards |
 | Image cache | On | Store art in IndexedDB for offline use |
 
-**Keyboard:** `Ctrl/Cmd + Enter` imports · `Ctrl/Cmd + P` exports the PDF (deliberately hijacked — the browser print path is the one that mis-scales).
+**Keyboard:** `Ctrl/Cmd + Enter` imports · `Ctrl/Cmd + P` exports the PDF (deliberately hijacked — the browser print path is the one that mis-scales) · `↑ ↓` navigate search results · `Esc` closes.
 
 ---
 
@@ -180,9 +198,11 @@ Honesty beats surprises.
 | Limit | Why |
 |---|---|
 | Max sharpness is 300 dpi | Scryfall's largest image is 745 px. Printing at 1200 dpi cannot invent detail that isn't in the file |
+| Camera needs HTTPS or localhost | Browser security rule; `file://` and LAN IP addresses are both blocked from camera access |
+| Scanning lands roughly 70–85 % first try | Stylised fonts and phone lighting; foils are the hard case. Misreads fall through to a pick-one-of-three prompt |
 | Trend arrows need two days | No keyless price-history API exists, so the app accumulates its own snapshots |
 | MPCFill art may not embed in PDFs | Those images live on Google Drive, which can block canvas reads. The app pre-checks and warns you |
-| Re-import clears tokens and manual additions | The list rebuilds from the textarea, which doesn't contain them |
+| Re-import clears tokens, scans and manual additions | The list rebuilds from the textarea, which doesn't contain them |
 
 ---
 
@@ -192,16 +212,11 @@ Issues and pull requests are welcome.
 
 **Ground rules**
 1. **Keep it one file.** The single-file constraint is the feature, not an accident.
-2. **No runtime dependencies.** No CDNs, no webfonts, no npm. It must work with the network unplugged.
+2. **Nothing loads before it's needed.** The app must open and work with the network unplugged. Optional features may fetch on demand, but must degrade gracefully when that fetch fails.
 3. **Never break the millimetres.** If a change touches layout or the PDF writer, verify the 100 mm ruler still measures 100 mm on paper.
 4. **Match the house style.** Comments and internal identifiers are in Finnish; all user-facing UI text is in English.
 
-**Before opening a PR**
-- Test at 375 px width and 1440 px width
-- Export a PDF and open it in a real PDF reader, not just the browser preview
-- Confirm the app still loads with DevTools set to offline
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and the pre-PR checklist.
 
 ---
 
@@ -220,5 +235,5 @@ Code is [MIT licensed](LICENSE). Do what you like with it.
 ---
 
 <div align="center">
-<sub>Built with zero dependencies and an unreasonable amount of respect for millimetres.</sub>
+<sub>Built with (almost) zero dependencies and an unreasonable amount of respect for millimetres.</sub>
 </div>
