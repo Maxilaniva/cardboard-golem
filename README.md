@@ -13,17 +13,41 @@ Turn any Magic: The Gathering deck list — typed, pasted, dropped, or **scanned
 
 </div>
 
+
+---
+
+## Table of contents
+
+- [The page](#the-page)
+  - [Why this exists](#why-this-exists)
+  - [Demo](#demo)
+    - [Card Import](#card-import)
+    - [Manual Search & Card Rules](#manual-search--card-rules)
+    - [Card Art Selection Tool](#card-art-selection-tool)
+    - [The flow — four steps, about ninety seconds](#the-flow--four-steps-about-ninety-seconds)
+    - [How a card gets found](#how-a-card-gets-found)
+- [Features](#features)
+- [Installation](#installation)
+  - [Why bother with a server for a local file?](#why-bother-with-a-server-for-a-local-file)
+  - [Requirements](#requirements)
+- [One optional dependency](#one-optional-dependency)
+- [Configuration](#configuration)
+- [Known limits](#known-limits)
+- [Contributing](#contributing)
+  - [Ground rules](#ground-rules)
+- [License](#license)
+
 ---
 
 # The page
 
 ## Why this exists
 
-Proxy printers usually fail in the same two ways: the cards come out a few percent too small to sleeve alongside real ones, and the tool stops working the day its CDN changes a URL.
+<p>Proxy printers usually fail in the same two ways: the cards come out a few percent too small to sleeve alongside real ones, and the tool stops working the day its CDN changes a URL.</p>
 
-Cardboard Golem fixes both by refusing to trust the browser with your geometry. It writes its **own PDF**, byte by byte, with every card placed at exact millimetre coordinates. The page box is authoritative — no print dialog, no `@page` negotiation, and no "fit to page" checkbox gets a vote.
+<p>Cardboard Golem fixes both by refusing to trust the browser with your geometry. It writes its **own PDF**, byte by byte, with every card placed at exact millimetre coordinates. The page box is authoritative — no print dialog, no `@page` negotiation, and no "fit to page" checkbox gets a vote.</p>
 
-Everything else follows from that: one file, no build step, system fonts only, and a card cache that survives losing your internet connection.
+<p>Everything else follows from that: one file, no build step, system fonts only, and a card cache that survives losing your internet connection.</p>
 
 ---
 
@@ -55,7 +79,7 @@ Everything else follows from that: one file, no build step, system fonts only, a
 └──────────────────────────┴────────────────────────────────────┘
 ```
 
-<img width="800" alt="image" src="https://github.com/user-attachments/assets/7d246a9d-7835-46ef-bb30-f5b79437ca6a" />
+> <img width="800" alt="image" src="https://github.com/user-attachments/assets/7d246a9d-7835-46ef-bb30-f5b79437ca6a" />
 
 ---
 
