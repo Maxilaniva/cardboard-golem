@@ -8,23 +8,31 @@ Thanks for considering a contribution. This document covers the constraints that
 
 These are not style preferences. Breaking any of them changes what the project is.
 
-### 1. One file, zero runtime dependencies
+### 1. One file
 
-Everything lives in `index.html`. No CDN links, no webfonts, no npm packages, no build step.
+Everything lives in `index.html`. No build step, no bundler, no module graph.
 
-The reason is concrete: this tool must work on a laptop with no internet connection, five years from now, when the CDN you linked has changed its URL scheme. If a feature genuinely cannot be built without a library, open an issue to discuss it before writing code.
+The reason is concrete: this tool must work on a laptop with no internet connection, five years from now. A single file has no supply chain to rot.
 
-### 2. The millimetres are sacred
+### 2. Nothing loads before it is needed
+
+The core application must open and function with the network unplugged. That means no CDN script tags, no `@import url()`, no webfonts, no analytics.
+
+**There is one bounded exception**, and it defines the rule for any future one. Camera OCR loads Tesseract.js from jsDelivr — but only when the user actually presses Scan, in a feature that already requires a camera and a live connection, and it degrades to manual entry if the fetch fails.
+
+A new optional dependency is acceptable only if it satisfies all three:
+
+- [ ] It loads **on demand**, never at page load
+- [ ] It serves a feature that **cannot work offline anyway**
+- [ ] Its failure degrades to a working fallback, **not** an error state
+
+If a proposed dependency fails any of these, open an issue to discuss before writing code.
+
+### 3. The millimetres are sacred
 
 A proxy printed at 96 % scale is unusable — it won't sleeve alongside real cards. Any change touching sheet geometry or the PDF writer must be verified against **physical paper**, not just a screen preview.
 
 The verification is built in: enable the 100 mm scale bar, export, print at Actual size, and measure it with a ruler. If it isn't 100 mm, something regressed.
-
-### 3. Degrade, never crash
-
-Every network call has a fallback. Every fallback ends somewhere printable. A card that cannot be found becomes a named outline; it never blocks the export or throws an unhandled error.
-
-When adding a new external call, wrap it so that total failure produces an empty result rather than an exception.
 
 ---
 
@@ -41,9 +49,9 @@ When adding a new external call, wrap it so that total failure produces an empty
 The split is deliberate: domain vocabulary is Finnish because that's the author's working language, but anything that is a technical interface or a user sees stays English.
 
 Other conventions:
-- Sections are numbered (`§ 1` … `§ 9`) with a header comment explaining the section's responsibility
+- Sections are numbered (`§ 0b` … `§ 11`) with a header comment explaining the section's responsibility
 - Comments explain **why**, not what. `// throttle to 110ms` is noise; `// max ~9 req/s so we don't get rate limited mid-import` is useful
-- No frameworks, no transpilation. Plain ES2020 that runs directly in a browser
+- Plain ES2020 that runs directly in a browser — no transpilation
 
 ---
 
@@ -51,13 +59,34 @@ Other conventions:
 
 Run through this list. Most rejected PRs fail on the first or last item.
 
-- [ ] **Physical print test** if you touched layout or PDF code — export, print, measure the 100 mm bar
-- [ ] **Mobile check** at 375 px width — every interactive element still reachable, no horizontal scroll, no input smaller than 16 px font
+**Always**
+- [ ] **Offline check** — DevTools → Network → Offline. The app loads and works from cache
+- [ ] **Mobile check** at 375 px width — every interactive element reachable, no horizontal scroll, no input under 16 px font
 - [ ] **Desktop check** at 1440 px width
-- [ ] **Offline check** — DevTools → Network → Offline. The app should load and work from cache
-- [ ] **PDF opens in a real reader** — Acrobat, Preview, or Firefox's viewer. Browser print preview is not sufficient
-- [ ] **No new dependencies** — no `<script src>`, no `@import url()`, no `fetch` to a CDN
 - [ ] **Console is clean** — no errors, no warnings you introduced
+- [ ] **No new page-load dependencies** — no `<script src>`, no `@import url()`
+
+**If you touched layout or the PDF writer**
+- [ ] **Physical print test** — export, print at Actual size, measure the 100 mm bar
+- [ ] **PDF opens in a real reader** — Acrobat, Preview, or Firefox's viewer. Browser print preview is not sufficient
+
+**If you touched card resolution**
+- [ ] Import a 100-card list and confirm it completes
+- [ ] Simulate a `429` response and confirm the app backs off rather than continuing to request
+- [ ] Confirm a genuinely nonexistent card is still marked missing after the full ladder
+
+**If you touched the scanner**
+- [ ] Test over `localhost` — `file://` cannot use the camera at all
+- [ ] Deny camera permission and confirm the message names the actual cause
+- [ ] Block jsDelivr and confirm it falls back to the manual crop rather than erroring
+
+---
+
+## A note on verification
+
+Syntax checks are not behaviour checks. A missing function reference passes `node --check` and fails at runtime — this has already bitten this project once.
+
+Where practical, extract the logic you changed into a small harness and test it against real inputs. The geometry, sharpness scoring, OCR cleanup, price trend, and resolution ladder are all pure enough to test this way, and several real bugs have been caught doing exactly that.
 
 ---
 
@@ -71,7 +100,7 @@ A useful bug report includes:
 4. **Browser and version**, and whether you opened the file directly or served it over `localhost`
 5. **Console output**, if there is any
 
-That last point about `file://` vs `localhost` resolves a surprising share of reports on its own.
+That fourth point resolves a surprising share of reports on its own.
 
 ### Print quality issues
 
@@ -81,6 +110,12 @@ Before reporting blurry output, please check:
 - Does the 100 mm bar on sheet 1 measure 100 mm?
 - Does the card row show a **low-res scan** badge? If so, that printing genuinely has no high-resolution source — try the Art button for a different printing.
 - Was PDF encoding set to JPEG or PNG? PNG is lossless and noticeably sharper on small text.
+
+### Scanner issues
+
+- Are you on `https://` or `localhost`? Nothing else can access a camera.
+- Does the message mention Shields, permissions, or another app using the camera? Each has a different fix.
+- Foil cards under direct light are the known worst case; tilting the card usually helps more than any setting.
 
 ---
 
@@ -92,7 +127,7 @@ Open an issue first for anything non-trivial. Useful proposals explain:
 - Why it can't be solved with existing settings
 - How it survives all three constraints above
 
-Features most likely to be accepted are ones that make the printed output more accurate or the import more forgiving. Features least likely are ones that add visual complexity to the interface — this is a utility, and restraint is part of the design.
+Features most likely to be accepted make the printed output more accurate or the import more forgiving. Features least likely add visual complexity to the interface — this is a utility, and restraint is part of the design.
 
 ---
 
