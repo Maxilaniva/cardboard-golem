@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 Maxilaniva
+Copyright (c) 2026 Cardboard Golem contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,20 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+NOTE ON SCOPE
+
+The MIT license above applies to the source code of this project only.
+
+Magic: The Gathering card names, images, artwork, mana symbols, and Oracle
+text are the property of Wizards of the Coast LLC and are NOT covered by this license.
+
+Cardboard Golem is unofficial Fan Content permitted under the Wizards of the
+Coast Fan Content Policy. Not approved or endorsed by Wizards. Portions of the
+materials used are property of Wizards of the Coast. (c) Wizards of the Coast LLC.
+
+Card data and imagery are provided by Scryfall (https://scryfall.com). This
+project is not produced by, endorsed by, supported by, or affiliated with
+Scryfall, LLC.
