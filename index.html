@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cardboard Golem — MTG proxy sheet printer</title>
+<style>
+/* =========================================================================
+   § 0  VÄRIT JA MUUT MUUTTUJAT
+   Leikkuumaton vihreä pohja + rekisteröintisininen korostus. Fontit vain
+   järjestelmästä, ei webfontteja — tän piti toimia ilman nettiäkin.
+   ========================================================================= */
+:root{
+  --mat:#2C3A34; --mat-line:#384A41; --panel:#151A18; --panel-2:#1D2422;
+  --rule:rgba(255,255,255,.10); --rule-2:rgba(255,255,255,.05);
+  --ink:#E6EDE9; --ink-dim:#93A39B; --ink-faint:#63736B;
+  --reg:#3FC7D8; --reg-deep:#1E8C9B; --alert:#E0457B; --amber:#E8B14C; --ok:#6BD39A;
+  --display:"Bahnschrift","Avenir Next Condensed","HelveticaNeue-CondensedBold","Arial Narrow",system-ui,sans-serif;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  --panel-w:376px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--body);color:var(--ink);background:var(--panel);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--reg);outline-offset:2px}
+.app{display:grid;grid-template-columns:var(--panel-w) 1fr;height:100vh}
+
+.panel{background:var(--panel);border-right:1px solid var(--rule);overflow-y:auto}
+.brand{padding:18px 20px 14px;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:11px;position:sticky;top:0;background:var(--panel);z-index:5}
+.brand h1{font-family:var(--display);font-size:22px;font-weight:700;margin:0;letter-spacing:.05em;line-height:1.05}
+.brand .tag{display:block;font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);letter-spacing:.1em;margin-top:2px}
+.brand .txt{min-width:0}
+.logo-mark{width:36px;height:36px;flex:none;display:block;overflow:visible}
+.logo-mark rect{fill:var(--panel-2);stroke:var(--ink-faint);stroke-width:1.1}
+.logo-mark .eye{fill:var(--reg)}
+.logo-mark .seam{stroke:var(--rule);stroke-width:1}
+.logo-mark .crop{stroke:var(--reg);stroke-width:1.6;stroke-linecap:round}
+.sect{border-bottom:1px solid var(--rule);padding:16px 20px}
+.sect>h2{font-family:var(--mono);font-size:10px;font-weight:600;margin:0 0 12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);display:flex;align-items:center;gap:8px}
+.sect>h2::after{content:"";flex:1;height:1px;background:var(--rule-2)}
+
+textarea{width:100%;min-height:150px;resize:vertical;background:var(--panel-2);border:1px solid var(--rule);border-radius:3px;padding:10px 11px;font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--ink);transition:border-color .14s,background .14s}
+textarea::placeholder{color:var(--ink-faint)}
+textarea.over{border-color:var(--reg);background:rgba(63,199,216,.07)}
+.row{display:flex;gap:8px;align-items:center}
+.row+.row{margin-top:9px}
+.grow{flex:1;min-width:0}
+label.field{display:block;margin-bottom:10px}
+label.field>span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:5px}
+select,input[type=number],input[type=search]{width:100%;background:var(--panel-2);border:1px solid var(--rule);border-radius:3px;padding:7px 9px;font-family:var(--mono);font-size:12px}
+.check{display:flex;gap:9px;align-items:flex-start;margin-bottom:9px;cursor:pointer;font-size:12.5px}
+.check input{margin:2px 0 0;accent-color:var(--reg);flex:none}
+.check .hint{display:block;color:var(--ink-faint);font-size:11px;line-height:1.4}
+.btn{border:1px solid var(--rule);background:var(--panel-2);border-radius:3px;padding:9px 14px;cursor:pointer;font-family:var(--display);letter-spacing:.1em;text-transform:uppercase;font-size:13px;font-weight:600;transition:background .12s,border-color .12s}
+.btn:hover:not(:disabled){background:#28312E;border-color:rgba(255,255,255,.2)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--reg-deep);border-color:var(--reg-deep);color:#04191C}
+.btn.primary:hover:not(:disabled){background:var(--reg)}
+.btn.sm{padding:5px 9px;font-size:11px;letter-spacing:.06em}
+.btn.ghost{background:transparent}
+
+/* --- pyöreä ikoninappi (selaa-tiedosto ym.) — mahdollisimman huomaamaton --- */
+.iconbtn{
+  width:26px;height:26px;flex:none;display:grid;place-items:center;padding:0;
+  border:1px solid transparent;border-radius:6px;background:transparent;cursor:pointer;
+  color:var(--ink-faint);transition:color .15s,background .15s,border-color .15s,transform .12s;
+}
+.iconbtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn:hover{color:var(--reg);background:rgba(63,199,216,.08);border-color:rgba(63,199,216,.3)}
+.iconbtn:active{transform:scale(.88)}
+.sect>h2 .iconbtn{order:2}
+.sect>h2::after{order:1}
+
+/* --- +/- stepperinapit korttirivillä --- */
+.stepbtn{
+  width:24px;height:24px;flex:none;display:grid;place-items:center;padding:0;
+  border:1px solid var(--rule);border-radius:5px;background:transparent;cursor:pointer;
+  color:var(--ink-dim);transition:color .13s,background .13s,border-color .13s,transform .1s;
+}
+.stepbtn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.stepbtn:hover{color:var(--reg);border-color:rgba(63,199,216,.4);background:rgba(63,199,216,.07)}
+.stepbtn:active{transform:scale(.85)}
+/* token-nappi: sama muoto kuin stepperit, mutta kullanvärinen ettei sekoitu
+   kappalemäärän säätöön — tämä LISÄÄ rivejä listaan, ei muuta lukua */
+.stepbtn.tok{color:var(--amber)}
+.stepbtn.tok:hover{color:var(--amber);border-color:rgba(232,177,76,.45);background:rgba(232,177,76,.08)}
+
+/* pomppu: kevyt skaalaus + väriväläys aina kun lukumäärä muuttuu */
+@keyframes pomppu{
+  0%{transform:scale(1)}
+  38%{transform:scale(1.22);color:var(--reg);border-color:var(--reg)}
+  100%{transform:scale(1)}
+}
+.qty.pomppu{animation:pomppu .22s ease-out}
+.dockMeta b.pomppu{display:inline-block;animation:pomppu .24s ease-out}
+@media (prefers-reduced-motion:reduce){.qty.pomppu,.dockMeta b.pomppu{animation:none}}
+.prog{height:2px;background:var(--rule);border-radius:2px;overflow:hidden;margin-top:12px}
+.prog i{display:block;height:100%;width:0;background:var(--reg);transition:width .2s}
+.status{font-family:var(--mono);font-size:11px;color:var(--ink-dim);margin-top:8px;min-height:1.4em;line-height:1.5}
+.status.err{color:var(--alert)}
+.status.good{color:var(--ok)}
+
+.list{display:flex;flex-direction:column;gap:1px;background:var(--rule-2);border-radius:3px;overflow:hidden}
+.item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 12px;align-items:start;padding:10px;background:var(--panel-2)}
+.item .thumb{grid-row:span 2;align-self:start;width:clamp(48px,14vw,68px);aspect-ratio:63/88;border-radius:3px;background:#0D110F;object-fit:cover;display:block}
+.item .thumb.ph{display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--ink-faint);text-align:center}
+.item .info{min-width:0}
+.item .nm{font-size:13.5px;font-weight:500;line-height:1.25;overflow-wrap:break-word;hyphens:none}
+.item .badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.item .badges:empty{display:none}
+.item .meta{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .meta .ylos{color:var(--ok)}
+.item .meta .alas{color:var(--alert)}
+.item .meta .hinta{color:var(--ink-dim)}
+.item .acts{grid-column:2;display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.badge{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:2px 5px;border-radius:2px;border:1px solid currentColor}
+.badge.warn{color:var(--amber)} .badge.bad{color:var(--alert)} .badge.dfc{color:var(--reg)}
+.item.missing{box-shadow:inset 3px 0 0 var(--alert)}
+.item.hl{background:#25302C;box-shadow:inset 3px 0 0 var(--reg)}
+.qty{width:calc(var(--w,1)*1ch + 20px);min-width:34px;max-width:88px;text-align:center;padding:5px 4px;font-family:var(--mono);font-size:12.5px;appearance:textfield;-moz-appearance:textfield}
+.qty::-webkit-outer-spin-button,.qty::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.empty{font-size:12.5px;color:var(--ink-faint);font-family:var(--mono);line-height:1.6}
+
+.listTools{display:flex;gap:6px;margin-bottom:9px}
+.listTools input{flex:1;min-width:0;font-size:11.5px}
+
+/* --- korttihaku ehdotuksilla --------------------------------------------- */
+.haku{position:relative;margin-bottom:9px}
+.haku>input{width:100%;padding:9px 30px 9px 11px;font-size:12.5px;font-family:var(--body)}
+.haku>.spin{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:12px;height:12px;
+  border:1.5px solid var(--rule);border-top-color:var(--reg);border-radius:50%;display:none;animation:pyori .6s linear infinite}
+.haku.lataa>.spin{display:block}
+@keyframes pyori{to{transform:translateY(-50%) rotate(360deg)}}
+.ehdotukset{
+  position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;max-height:266px;overflow-y:auto;
+  background:var(--panel-2);border:1px solid var(--rule);border-radius:6px;
+  box-shadow:0 14px 34px rgba(0,0,0,.5);display:none;
+}
+.ehdotukset.on{display:block}
+.ehdotus{
+  display:flex;align-items:center;gap:9px;width:100%;text-align:left;cursor:pointer;
+  padding:9px 11px;border:0;border-top:1px solid var(--rule-2);background:transparent;
+  font-size:12.5px;color:var(--ink);line-height:1.3;
+}
+.ehdotus:first-child{border-top:0}
+.ehdotus:hover,.ehdotus.valittu{background:rgba(63,199,216,.12);color:#fff}
+.ehdotus b{font-weight:700;color:var(--reg)}          /* osuva alkuosa korostettuna */
+.ehdotus .plus{margin-left:auto;flex:none;color:var(--ink-faint);font-family:var(--mono);font-size:14px;line-height:1}
+.ehdotus.valittu .plus,.ehdotus:hover .plus{color:var(--reg)}
+.ehdotukset .tyhja{padding:10px 11px;font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.5}
+.chip{flex:none;border:1px solid var(--rule);background:transparent;border-radius:3px;padding:6px 9px;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
+.chip.on{border-color:var(--alert);color:var(--alert);background:rgba(224,69,123,.08)}
+.chip:disabled{opacity:.35;cursor:default}
+
+.dock{position:sticky;bottom:0;z-index:6;padding:12px 20px 16px;border-top:1px solid var(--rule);
+  background:linear-gradient(180deg,rgba(21,26,24,.55),var(--panel) 42%);backdrop-filter:blur(8px)}
+.dockMeta{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);margin-bottom:9px}
+.dockMeta b{color:var(--reg);font-weight:600}
+.dockMeta .bad{color:var(--alert)}
+
+details.adv{margin-top:6px;border-top:1px solid var(--rule-2);padding-top:12px}
+details.adv>summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+details.adv>summary::-webkit-details-marker{display:none}
+details.adv>summary::after{content:"+";margin-left:auto;font-size:14px;line-height:1}
+details.adv[open]>summary::after{content:"\2212"}
+details.adv>summary:hover{color:var(--ink-dim)}
+.advBody{padding-top:14px}
+
+.stage{display:flex;flex-direction:column;overflow:hidden;background:var(--mat)}
+.stagebar{display:flex;align-items:center;gap:14px;padding:11px 20px;border-bottom:1px solid rgba(0,0,0,.3);background:rgba(0,0,0,.18);flex:none;flex-wrap:wrap}
+.stat{font-family:var(--mono);font-size:11px;color:#A9BDB3}
+.stat b{color:var(--reg);font-weight:600}
+.stagebar .sp{flex:1}
+select.mini{width:auto;padding:3px 6px;font-size:11px;background:var(--panel-2);border:1px solid var(--rule);border-radius:3px;font-family:var(--mono)}
+.mat{flex:1;overflow:auto;padding:34px 34px 60px;background-color:var(--mat);
+  background-image:linear-gradient(var(--mat-line) 1px,transparent 1px),linear-gradient(90deg,var(--mat-line) 1px,transparent 1px);
+  background-size:10mm 10mm}
+.sheets{display:flex;flex-direction:column;align-items:center;gap:34px}
+.sheetwrap{position:relative;flex:none}
+.sheet{position:relative;background:#fff;flex:none;overflow:hidden;transform-origin:top left;box-shadow:0 2px 0 rgba(0,0,0,.35),0 18px 40px rgba(0,0,0,.4)}
+.sheetno{position:absolute;top:-22px;left:0;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#9FB4AA}
+.slot{position:absolute;overflow:hidden;background:#fff;transition:opacity .12s}
+.slot img{width:100%;height:100%;object-fit:fill;display:block}
+.sheet.dim .slot{opacity:.28}
+.sheet.dim .slot.hl{opacity:1;outline:.7mm solid var(--reg);outline-offset:-.7mm}
+.slot .miss{width:100%;height:100%;border:1px dashed #B9B9C2;border-radius:3mm;display:flex;flex-direction:column;justify-content:center;gap:2mm;padding:5mm;text-align:center;color:#2A2A32;background:#fff}
+.slot .miss b{font-family:var(--display);font-size:4mm;letter-spacing:.04em;line-height:1.15;text-transform:uppercase}
+.slot .miss span{font-family:var(--mono);font-size:2.2mm;letter-spacing:.1em;text-transform:uppercase;color:#8A8A96}
+.mark{position:absolute;background:#111}
+.cutline{position:absolute;background:rgba(0,0,0,.35)}
+.ruler{position:absolute;height:5mm;border-left:.3mm solid #111;border-right:.3mm solid #111;border-bottom:.3mm solid #111}
+.ruler i{position:absolute;bottom:0;width:.2mm;height:2mm;background:#111}
+.ruler b{position:absolute;left:50%;transform:translateX(-50%);bottom:1.6mm;font-family:var(--mono);font-size:2.4mm;color:#111;font-weight:400}
+
+.sheet.ghost{background:#F6F8F7}
+.ghostSlot{position:absolute;border:.35mm dashed #C2CCC7;border-radius:3mm}
+.ghostMsg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5mm;text-align:center;padding:12mm}
+.ghostMsg h3{margin:0;font-family:var(--display);font-size:10mm;line-height:1;letter-spacing:.1em;text-transform:uppercase;color:#2C3A34}
+.ghostMsg p{margin:0;max-width:130mm;font-family:var(--mono);font-size:3.1mm;line-height:1.7;letter-spacing:.05em;color:#5E6E66}
+.ghostMsg button{border:.35mm solid #2C3A34;background:#2C3A34;color:#F6F8F7;border-radius:1mm;padding:2.6mm 5mm;cursor:pointer;font-family:var(--display);font-size:3.6mm;letter-spacing:.12em;text-transform:uppercase}
+.ghostMsg button:hover{background:#1E8C9B;border-color:#1E8C9B}
+
+.veil{position:fixed;inset:0;background:rgba(6,10,9,.78);display:none;z-index:50;padding:5vh 4vw}
+.veil.on{display:block}
+.modal{max-width:1000px;margin:0 auto;background:var(--panel);border:1px solid var(--rule);border-radius:5px;max-height:90vh;display:flex;flex-direction:column}
+.modal header{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--rule)}
+.modal header h3{margin:0;font-family:var(--display);text-transform:uppercase;letter-spacing:.1em;font-size:17px}
+.modal .body{overflow-y:auto;padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.pick{border:1px solid var(--rule);border-radius:3px;background:var(--panel-2);padding:8px;cursor:pointer;text-align:left}
+.pick:hover{border-color:var(--reg)}
+.pick img{width:100%;aspect-ratio:63/88;object-fit:cover;border-radius:2px;background:#0D110F;display:block}
+.pick .s{font-family:var(--mono);font-size:10px;color:var(--ink-dim);margin-top:6px;line-height:1.4}
+.pick .lo{color:var(--amber)}
+
+.callout{border-left:2px solid var(--amber);padding:9px 12px;background:rgba(232,177,76,.07);font-size:11.5px;line-height:1.55;color:#D9C79E;border-radius:0 3px 3px 0}
+.callout.bad{border-color:var(--alert);background:rgba(224,69,123,.08);color:#EFAFC5}
+.callout b{color:var(--amber);font-weight:600}
+.callout.bad b{color:var(--alert)}
+code{font-family:var(--mono);font-size:11px;background:var(--panel-2);padding:1px 4px;border-radius:2px}
+
+/* =========================================================================
+   § 0e  MOBIILI
+   Kolme periaatetta: (1) jokainen napautettava asia vähintään ~44 px,
+   (2) kaikki syöttökentät 16 px fontilla — pienempi laukaisee iOS:n
+   pakkozoomin kenttään ja juuri se aiheuttaa sen "joudun zoomailemaan"
+   -tunteen, (3) paneeli ja esikatselu omiksi välilehdikseen alapalkkiin,
+   ettei tarvi rullata koko asetuslistaa läpi päästäkseen arkeille.
+   ========================================================================= */
+.mtabs{display:none;position:fixed;left:0;right:0;bottom:0;z-index:35;gap:8px;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:rgba(21,26,24,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--rule)}
+.mtab{flex:1;min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  border:1px solid transparent;border-radius:10px;background:transparent;cursor:pointer;color:var(--ink-dim);
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  transition:color .14s,background .14s,border-color .14s}
+.mtab svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mtab[aria-selected="true"]{color:var(--reg);background:rgba(63,199,216,.1);border-color:rgba(63,199,216,.3)}
+.mtab.paa{color:#04191C;background:var(--reg-deep);border-color:var(--reg-deep);font-weight:700}
+.mtab.paa:active{background:var(--reg)}
+
+@media (max-width:900px){
+  body{font-size:15px;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+  .app{grid-template-columns:1fr;height:auto}
+  .panel{border-right:none;overflow:visible}
+  .stage{overflow:visible;height:auto;min-height:60vh}
+  .mat{overflow:visible;padding:16px 10px 40px;background-size:5mm 5mm}
+  .sheets{gap:20px}
+  .sect{padding:16px}
+
+  /* 16 px on se raja jonka alapuolella iOS zoomaa kenttään väkisin */
+  textarea,select,input[type=number],input[type=search],select.mini{font-size:16px}
+  textarea{min-height:170px;padding:12px;border-radius:8px}
+  select,input[type=number],input[type=search]{padding:11px 12px;border-radius:8px}
+  label.field>span{font-size:11px}
+
+  /* kosketusalueet: nappi ~48 px, ikoni- ja stepperinapit ~44 px */
+  .btn{min-height:48px;padding:12px 16px;font-size:14px;border-radius:9px}
+  .btn.sm{min-height:42px;padding:9px 13px;font-size:12.5px}
+  .iconbtn{width:44px;height:44px;border-radius:10px}
+  .iconbtn svg{width:21px;height:21px}
+  .stepbtn{width:42px;height:42px;border-radius:9px}
+  .stepbtn svg{width:16px;height:16px}
+  .qty{min-width:52px;max-width:110px;padding:9px 6px;font-size:16px;border-radius:8px}
+  .chip{min-height:42px;padding:9px 13px;font-size:11px;border-radius:9px}
+  .listTools input{padding:11px 12px}
+  .haku>input{font-size:16px;padding:12px 34px 12px 12px;border-radius:8px}
+  .ehdotukset{max-height:52vh;border-radius:9px}
+  .ehdotus{min-height:48px;padding:12px;font-size:15px}
+  .ehdotus .plus{font-size:18px}
+  .check{font-size:14px;gap:11px}
+  .check input{width:20px;height:20px}
+
+  /* korttirivi: isompi kuva, isompi nimi, metarivi saa rivittyä eikä katkea */
+  .item{padding:13px 12px;gap:10px 14px}
+  .item .thumb{width:clamp(56px,17vw,84px)}
+  .item .nm{font-size:15px}
+  .item .meta{font-size:11px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45}
+  .badge{font-size:10px;padding:3px 7px}
+  .status{font-size:12.5px}
+  .empty{font-size:13px}
+  .callout{font-size:12.5px}
+
+  .stagebar{padding:10px 12px;gap:10px}
+  .stat{font-size:12px}
+  select.mini{padding:9px 10px;border-radius:8px}
+  .dock{position:static;padding:14px 16px}
+  .dockMeta{font-size:11px}
+
+  /* taidevalitsin koko ruudun arkiksi — ei kelluvaa pikkuikkunaa peukalolle */
+  .veil{padding:0}
+  .modal{height:100dvh;max-height:100dvh;border-radius:0;border-left:0;border-right:0}
+  .modal header{padding:14px 16px}
+  .modal .body{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));padding:14px;gap:10px}
+
+  /* välilehdet: näytetään vain valittu puoli */
+  body[data-nakyma="deck"] .stage{display:none}
+  body[data-nakyma="preview"] .panel{display:none}
+  .mtabs{display:flex}
+}
+@media (max-width:520px){
+  .brand{padding:14px 16px 12px}
+  .brand h1{font-size:20px}
+  .row{flex-wrap:wrap}
+  .row>.field{min-width:calc(50% - 4px)}
+  #sCache{display:none}
+  .modal .body{grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* =========================================================================
+   § 0d  TULOSTUS — varasuunnitelma, PDF-vienti on se pääjuttu.
+   Jokaisen esi-isä-elementin pitää pudottaa korkeutensa "auto":ksi, muuten
+   vaan ensimmäinen arkki näkyy tulosteessa ja loput leikkautuu pois.
+   ========================================================================= */
+@media print{
+  html,body{height:auto!important;width:auto!important;margin:0!important;padding:0!important;background:#fff;overflow:visible!important}
+  .panel,.stagebar,.veil,.sheetno,.mtabs{display:none!important}
+  .app{display:block!important;height:auto!important;overflow:visible!important}
+  .stage{display:block!important;height:auto!important;overflow:visible!important;background:#fff}
+  .mat{display:block!important;height:auto!important;overflow:visible!important;padding:0!important;background:#fff;background-image:none}
+  .sheets{display:block!important;gap:0}
+  .sheetwrap{display:block!important;width:auto!important;height:auto!important;margin:0!important}
+  .sheetwrap+.sheetwrap{break-before:page;page-break-before:always}
+  .sheetwrap:last-child{break-after:auto;page-break-after:auto}
+  .sheet{box-shadow:none;margin:0;transform:none!important;break-inside:avoid;page-break-inside:avoid;overflow:hidden}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+<style id="pageStyle">@page{size:210mm 297mm;margin:0}</style>
+</head>
+<body>
+<div class="app">
+<aside class="panel">
+  <div class="brand">
+    <svg class="logo-mark" viewBox="0 0 34 42" aria-hidden="true">
+      <!-- käsivarret -->
+      <rect x="0.5" y="15" width="7" height="12" rx="1.8"/>
+      <rect x="26.5" y="15" width="7" height="12" rx="1.8"/>
+      <!-- jalat -->
+      <rect x="9" y="32" width="7" height="8.5" rx="1.6"/>
+      <rect x="18" y="32" width="7" height="8.5" rx="1.6"/>
+      <!-- vartalo, koottu korttien mittasuhteista -->
+      <rect x="6" y="13" width="22" height="17" rx="2.2"/>
+      <line class="seam" x1="6" y1="19.5" x2="28" y2="19.5"/>
+      <!-- pää -->
+      <rect x="10.5" y="1.5" width="13" height="9.5" rx="2"/>
+      <circle class="eye" cx="14.3" cy="6.3" r="1.15"/>
+      <circle class="eye" cx="19.7" cy="6.3" r="1.15"/>
+      <!-- suu: sama leikkausristi jota tää sovellus piirtää arkeille -->
+      <path class="crop" d="M17 8.6v2.6M15.7 9.9h2.6"/>
+    </svg>
+    <div class="txt">
+      <h1>Cardboard Golem</h1>
+      <span class="tag">ASSEMBLED, NOT PURCHASED · LOCAL</span>
+    </div>
+  </div>
+
+  <section class="sect">
+    <h2>1 · Deck list
+      <button class="iconbtn" id="btnBrowse" type="button" title="Browse .txt deck file" aria-label="Browse deck file">
+        <svg viewBox="0 0 24 24"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-8L9.6 4.6A2 2 0 0 0 8.2 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1Z"/><path d="M12 10v6m-3-3 3-3 3 3"/></svg>
+      </button>
+      <input type="file" id="fileInput" accept=".txt,.dec,.dek,text/plain" hidden>
+    </h2>
+    <textarea id="deckIn" spellcheck="false" placeholder="4 Lightning Bolt
+2 Ragavan, Nimble Pilferer (MH2) 138
+1 Wrenn and Six
+Sideboard
+2 Blood Moon
+
+Paste a list, drop a .txt file here, or use the folder icon above."></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary grow" id="btnImport">Import list</button>
+      <button class="btn" id="btnClear">Clear</button>
+    </div>
+    <div class="prog"><i id="progBar"></i></div>
+    <div class="status" id="status">Paste an Arena, Moxfield, or plain <code>4 Card Name</code> list. Missing counts default to 1, and messy formatting is fine.</div>
+    <div id="netHelp"></div>
+  </section>
+
+  <section class="sect">
+    <h2>2 · Cards <span id="listCount" style="color:var(--ink-dim);letter-spacing:0"></span></h2>
+    <div class="haku" id="hakuKotelo">
+      <input type="text" id="hakuKentta" placeholder="Search any Magic card to add…" spellcheck="false"
+             autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list"
+             aria-controls="ehdotukset" aria-label="Search and add a card">
+      <span class="spin" aria-hidden="true"></span>
+      <div class="ehdotukset" id="ehdotukset" role="listbox" aria-label="Card suggestions"></div>
+    </div>
+    <div class="listTools">
+      <input type="search" id="filter" placeholder="Filter list" spellcheck="false">
+      <button class="chip" id="chipMissing" disabled>Missing 0</button>
+    </div>
+    <div class="list" id="cardList"></div>
+    <div class="empty" id="listEmpty">No cards yet.</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn sm ghost" id="btnRetry">Retry missing</button>
+      <button class="btn sm ghost" id="btnPurge">Clear cache</button>
+    </div>
+  </section>
+
+  <section class="sect">
+    <h2>3 · Sheet setup</h2>
+    <div class="row">
+      <label class="field grow"><span>Paper</span>
+        <select id="paper">
+          <option value="A4">A4 · 210 × 297</option>
+          <option value="LETTER">Letter · 216 × 279</option>
+          <option value="A4L">A4 landscape</option>
+          <option value="LETTERL">Letter landscape</option>
+        </select></label>
+      <label class="field grow"><span>Image source</span>
+        <select id="quality">
+          <option value="png">PNG · 745 px (300 dpi)</option>
+          <option value="large">Large JPG · 672 px (271 dpi)</option>
+          <option value="border_crop">Border crop · 480 px</option>
+          <option value="normal">Normal JPG · 488 px</option>
+        </select></label>
+    </div>
+    <label class="field" style="margin-bottom:0"><span>Cut guides</span>
+      <select id="guides">
+        <option value="marks">Crop marks in margin</option>
+        <option value="lines">Full cut lines across sheet</option>
+        <option value="none">None</option>
+      </select></label>
+
+    <details class="adv">
+      <summary>Fine tuning</summary>
+      <div class="advBody">
+        <div class="row">
+          <label class="field grow"><span>Card W mm</span><input type="number" id="cardW" value="63" step="0.5" min="20"></label>
+          <label class="field grow"><span>Card H mm</span><input type="number" id="cardH" value="88" step="0.5" min="20"></label>
+          <label class="field grow"><span>Gap mm</span><input type="number" id="gap" value="0" step="0.5" min="0" max="10"></label>
+        </div>
+        <label class="field"><span>Safe margin mm</span><input type="number" id="margin" value="6.5" step="0.5" min="0" max="25"></label>
+        <label class="field"><span>PDF encoding</span>
+          <select id="enc">
+            <option value="jpeg">JPEG q95 · smaller file</option>
+            <option value="png">PNG · lossless, sharpest text</option>
+          </select></label>
+        <label class="field"><span>Card prices</span>
+          <select id="hinta">
+            <option value="eur">EUR · Cardmarket</option>
+            <option value="usd">USD · TCGplayer</option>
+            <option value="off">Hide prices</option>
+          </select></label>
+        <div class="callout" style="margin:0 0 12px">
+          <b>Source art is the ceiling.</b> Scryfall’s largest file is 745 px, which is exactly 300 dpi on a 63 mm card. Nothing here upscales, and printing at 1200 dpi cannot add detail that isn’t in the file.
+        </div>
+        <label class="check"><input type="checkbox" id="ruler" checked><span>Print a 100 mm scale bar on sheet 1
+          <span class="hint">Measure it. If it isn’t 100 mm, something rescaled the page.</span></span></label>
+        <label class="check"><input type="checkbox" id="dfc" checked><span>Print both faces of double-faced cards</span></label>
+        <label class="check" style="margin-bottom:0"><input type="checkbox" id="cacheImgs" checked><span>Cache images on this device</span></label>
+      </div>
+    </details>
+  </section>
+
+  <section class="sect" style="border-bottom:none">
+    <h2>4 · Output</h2>
+    <div class="callout">
+      <b>The PDF is the reliable route.</b> Its pages carry exact millimetre coordinates, so no browser or print dialog can reinterpret the layout. Print it with <code>Actual size</code> and scaling off.
+    </div>
+    <button class="btn ghost" id="btnPrint" style="width:100%;margin-top:12px">Print from browser instead</button>
+    <div class="empty" style="margin-top:8px">Browser printing obeys your print dialog: paper must match, margins <code>None</code>, scale <code>100%</code>.</div>
+    <div class="empty" style="margin-top:14px">Images come from Scryfall’s public API. Proxies are for personal playtesting only.</div>
+  </section>
+
+  <div class="dock">
+    <div class="dockMeta" id="dockMeta"><span>No cards yet</span></div>
+    <button class="btn primary" id="btnPdf" style="width:100%">Export PDF</button>
+  </div>
+</aside>
+
+<main class="stage">
+  <div class="stagebar">
+    <span class="stat">Cards <b id="sCards">0</b></span>
+    <span class="stat">Sheets <b id="sSheets">0</b></span>
+    <span class="stat">Grid <b id="sGrid">—</b></span>
+    <span class="stat">Blank <b id="sBlank">0</b></span>
+    <span class="sp"></span>
+    <span class="stat" id="sCache">cache —</span>
+    <select id="zoom" class="mini" title="Preview zoom">
+      <option value="fit">Fit width</option>
+      <option value="0.4">40%</option><option value="0.6">60%</option>
+      <option value="0.8">80%</option><option value="1">100%</option>
+    </select>
+    <span class="stat"><b id="sZoom">—</b></span>
+  </div>
+  <div class="mat"><div class="sheets" id="sheets"></div></div>
+</main>
+</div>
+
+<nav class="mtabs" aria-label="Mobile navigation">
+  <button class="mtab" id="mtabDeck" type="button" aria-selected="true">
+    <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
+    <span>Deck</span>
+  </button>
+  <button class="mtab" id="mtabPreview" type="button" aria-selected="false">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="8.5" rx="1"/><rect x="13.5" y="3" width="7.5" height="8.5" rx="1"/><rect x="3" y="14.5" width="7.5" height="6.5" rx="1"/><rect x="13.5" y="14.5" width="7.5" height="6.5" rx="1"/></svg>
+    <span>Preview</span>
+  </button>
+  <button class="mtab paa" id="mtabPdf" type="button">
+    <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+    <span>PDF</span>
+  </button>
+</nav>
+
+<div class="veil" id="veil">
+  <div class="modal">
+    <header><h3 id="pickTitle">Choose a printing</h3><span style="flex:1"></span><button class="btn sm" id="pickClose">Close</button></header>
+    <div class="body" id="pickBody"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =========================================================================
+   Moikka! Tässä on koko sovelluksen aivot. Selitän vähän isommalla kädellä
+   mitä missäkin tapahtuu, ettei tarvi arvailla puolen vuoden päästä miksi
+   joku juttu on tehty juuri näin.
+
+   § 1  DEKKILISTAN JÄSENNYS
+   Ymmärtää Arena-, Moxfield- ja plain-formaatit: "4 Bolt", "4x Bolt",
+   "2 Ragavan (MH2) 138", "1 Sol Ring (CMR) 314 *F*", osio-otsikot ja
+   // # -kommentit. Splitkortit ("Fire // Ice") selviää hengissä, koska
+   kommentin pitää olla rivin ALUSSA, ei missä tahansa.
+   ========================================================================= */
+const OSIO_REGEX=/^(deck|main(deck|board)?|sideboard|commander|companion|maybeboard|considering|tokens?)\b\s*[:(]?/i;
+
+// Siistii nimen niin että "Æther" ja "Aether" ynnä muut aksentit menee
+// samaan muottiin — muuten sama kortti tuplaantuu listalla ihan turhaan.
+function siistiNimi(nimi){
+  return nimi.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/æ/gi,"ae")
+    .toLowerCase().replace(/[,.'\u2019"!?:;]/g,"").replace(/\s+/g," ").trim();
+}
+
+// Luettelomerkit rivin alusta: "- Bolt", "* Bolt", "• Bolt" ynnä muut —
+// ihmiset kopioi näitä usein Wordista tai muistiinpanosovelluksesta.
+const LUETTELOMERKKI_REGEX=/^[-*•‣◦●○\u2022\u2023\u25E6\u2043\u2219]\s+/;
+
+// Jos lukumäärä ei löydy rivin ALUSTA, kokeillaan vielä LOPUSTA — kattaa
+// muodot "Lightning Bolt x4", "Lightning Bolt, 4", "Lightning Bolt (4)".
+// Näitä kokeillaan VASTA jos alusta ei löytynyt mitään, joten ne ei voi
+// koskaan "varastaa" jo löydettyä oikeaa lukumäärää.
+const LOPUN_MAARA_REGEXIT=[
+  /\s+[xX]\s*(\d+)\s*$/,
+  /[,;|]\s*(\d+)\s*$/,
+  /\(\s*(\d+)\s*\)\s*$/
+];
+
+function jasennaDekkilista(teksti){
+  const tulos=[], nahdytAvaimet=new Map();
+  let osio="main";
+  // Muistiinpanosovellukset ja Windowsin Notepad tallentaa toisinaan
+  // näkymättömän BOM-tavun tiedoston kärkeen — ilman tätä ensimmäinen
+  // kortti listalla jäisi aina tunnistamatta.
+  teksti=teksti.replace(/^\uFEFF/,"");
+
+  for(const rivi0 of teksti.split(/\r?\n/)){
+    let rivi=rivi0.trim();
+    if(!rivi||/^(\/\/|#)/.test(rivi)) continue;               // tyhjä tai kommenttirivi, skipataan
+    const osioOsuma=rivi.match(OSIO_REGEX);
+    if(osioOsuma&&!/^\d/.test(rivi)){ osio=osioOsuma[1].toLowerCase(); continue; }
+    if(/^(about|name)\b/i.test(rivi)) continue;                // Moxfieldin metarivit, ei kiinnosta
+
+    rivi=rivi.replace(LUETTELOMERKKI_REGEX,"");
+
+    // Taulukkodata (esim. Excelistä kopioitu): "Lightning Bolt<TAB>4<TAB>MH2"
+    // Poimitaan sarakkeista nimi, ekaks löytyvä pelkkä numero (=lukumäärä)
+    // ja ekaks löytyvä 2-6 merkin settikoodilta näyttävä pätkä.
+    if(rivi.indexOf("\t")>-1){
+      const sarakkeet=rivi.split("\t").map(s=>s.trim()).filter(Boolean);
+      if(sarakkeet.length>=2){
+        let sarakeNimi=null, sarakeMaara=null, sarakeSetti=null;
+        for(const s of sarakkeet){
+          if(/^\d+$/.test(s)){ if(sarakeMaara===null) sarakeMaara=s; continue; }
+          if(sarakeNimi===null && !/^[A-Za-z0-9]{2,4}$/.test(s)){ sarakeNimi=s; continue; }
+          if(sarakeSetti===null && /^[A-Za-z0-9]{2,4}$/.test(s)){ sarakeSetti=s; continue; }
+        }
+        if(sarakeNimi===null) sarakeNimi=sarakkeet[0];         // ei löytyny selkeetä nimisaraketta, otetaan eka
+        rivi=(sarakeMaara||"1")+" "+sarakeNimi+(sarakeSetti?" ("+sarakeSetti+")":"");
+      }
+    }
+
+    // roskat pois: *F*-foil-merkinnät ja [hakasulkeet]
+    rivi=rivi.replace(/\s*\*[A-Za-z]\*\s*/g," ").replace(/\s*\[[^\]]*\]\s*/g," ").trim();
+
+    let maara=1, maaraLoytyi=false;
+    const maaraOsuma=rivi.match(/^(\d+)\s*[xX]?[\s.)]+(.*)$/);
+    if(maaraOsuma){
+      maara=Math.max(1,parseInt(maaraOsuma[1],10)); rivi=maaraOsuma[2].trim(); maaraLoytyi=true;
+    }
+
+    // Ei lukumäärää alussa -> kokeillaan lopusta. Jos sielläkään ei löydy
+    // mitään, oletus pysyy ykkösenä (näin "poorly organized" listat ei
+    // koskaan kaadu, ne vaan tulostuu yhtenä kappaleena per kortti).
+    if(!maaraLoytyi){
+      for(const re of LOPUN_MAARA_REGEXIT){
+        const osuma=rivi.match(re);
+        if(osuma){ maara=Math.max(1,parseInt(osuma[1],10)); rivi=rivi.slice(0,osuma.index).trim(); break; }
+      }
+    }
+
+    // setti + keräilynumero lopusta, esim "(MH2) 138"
+    let setti=null, kerailynro=null;
+    const settiOsuma=rivi.match(/\s*\(([A-Za-z0-9]{2,6})\)\s*([A-Za-z0-9\u2605\u2020-]+)?\s*$/);
+    if(settiOsuma){
+      setti=settiOsuma[1].toLowerCase();
+      kerailynro=settiOsuma[2]?settiOsuma[2].toLowerCase():null;
+      rivi=rivi.slice(0,settiOsuma.index).trim();
+    }
+
+    const nimi=rivi.replace(/\s+/g," ").trim();
+    if(!nimi) continue;
+
+    // sama kortti kahdesti listalla -> lasketaan yhteen, ei tehdä uutta riviä
+    const avain=siistiNimi(nimi)+"|"+(setti||"")+"|"+(kerailynro||"");
+    if(nahdytAvaimet.has(avain)){ nahdytAvaimet.get(avain).maara+=maara; continue; }
+
+    const kortti={
+      id:avain, nimi:nimi, setti:setti, kerailynro:kerailynro, maara:maara, osio:osio,
+      data:null, tila:"odottaa", lahde:null, kiinnitetty:false
+    };
+    nahdytAvaimet.set(avain,kortti);
+    tulos.push(kortti);
+  }
+  return tulos;
+}
+
+/* =========================================================================
+   § 2  PAIKALLINEN VÄLIMUISTI (IndexedDB: korttidata + kuvatiedostot)
+   Tän ansiosta samaa dekkiä ei tarvi hakea netistä joka kerta uudestaan.
+   ========================================================================= */
+const TIETOKANNAN_NIMI="cardboard-golem", TIETOKANNAN_VERSIO=1;
+let _tietokanta=null;
+
+function avaaTietokanta(){
+  if(_tietokanta) return Promise.resolve(_tietokanta);
+  return new Promise(function(ok,eiOk){
+    const pyynto=indexedDB.open(TIETOKANNAN_NIMI,TIETOKANNAN_VERSIO);
+    pyynto.onupgradeneeded=function(){
+      const d=pyynto.result;
+      if(!d.objectStoreNames.contains("kortit")) d.createObjectStore("kortit");
+      if(!d.objectStoreNames.contains("kuvat")) d.createObjectStore("kuvat");
+    };
+    pyynto.onsuccess=function(){ _tietokanta=pyynto.result; ok(_tietokanta); };
+    pyynto.onerror=function(){ eiOk(pyynto.error); };
+  });
+}
+// Kaikki nää heittää try/catchin sisään, koska yksityinen selaus tai täysi
+// levy voi kaataa IndexedDB:n — silloin sovellus vaan jatkaa ilman välimuistia.
+async function haeValimuistista(varasto,avain){
+  try{
+    const d=await avaaTietokanta();
+    return await new Promise(function(ok,eiOk){
+      const p=d.transaction(varasto).objectStore(varasto).get(avain);
+      p.onsuccess=function(){ok(p.result)}; p.onerror=function(){eiOk(p.error)};
+    });
+  }catch(e){ return undefined; }
+}
+async function tallennaValimuistiin(varasto,avain,arvo){
+  try{
+    const d=await avaaTietokanta();
+    await new Promise(function(ok,eiOk){
+      const t=d.transaction(varasto,"readwrite"); t.objectStore(varasto).put(arvo,avain);
+      t.oncomplete=ok; t.onerror=function(){eiOk(t.error)};
+    });
+  }catch(e){}
+}
+async function tyhjennaValimuisti(varasto){
+  try{
+    const d=await avaaTietokanta();
+    await new Promise(function(ok){
+      const t=d.transaction(varasto,"readwrite"); t.objectStore(varasto).clear(); t.oncomplete=ok;
+    });
+  }catch(e){}
+}
+async function laskeValimuistista(varasto){
+  try{
+    const d=await avaaTietokanta();
+    return await new Promise(function(ok){
+      const p=d.transaction(varasto).objectStore(varasto).count();
+      p.onsuccess=function(){ok(p.result)}; p.onerror=function(){ok(0)};
+    });
+  }catch(e){ return 0; }
+}
+
+/* =========================================================================
+   § 3  KORTTIEN HAKU SCRYFALLISTA
+
+   TÄRKEE JUTTU: pääreitin pitää olla pelkkiä GET-pyyntöjä ilman omia
+   headereita ("simple request"). Miksi? Koska POST /cards/collection
+   vaatii CORS-preflightin, ja jos tän sivun avaa suoraan levyltä
+   (file://), selain lähettää Origin: null — ja aika moni verkko/selain-
+   yhdistelmä hylkää sen preflightissa. Sen takia POST on TÄSSÄ vaan
+   optimointi joka sammuu itsestään ekaan virheeseen, ei koskaan ainut reitti.
+
+   Tikapuut: välimuisti -> erähaku -> named?exact -> named?fuzzy ->
+   vapaa haku -> ei löyty (tyhjä paikka arkille).
+   ========================================================================= */
+const API_JUURI="https://api.scryfall.com";
+let _edellinenKutsu=0, erahakuToimii=true;
+const nukuHetki=ms=>new Promise(r=>setTimeout(r,ms));
+
+// Pieni kohteliaisuus Scryfallille: max ~9 pyyntöä sekunnissa, ettei
+// tuu rate limit -bannia kesken ison dekin haun.
+async function kutsuRajapintaa(polku,asetukset){
+  const odotus=110-(Date.now()-_edellinenKutsu);
+  if(odotus>0) await nukuHetki(odotus);
+  _edellinenKutsu=Date.now();
+  let vastaus;
+  try{ vastaus=await fetch(API_JUURI+polku,asetukset||undefined); }
+  catch(e){ const virhe=new Error("verkko poikki"); virhe.verkko=true; throw virhe; }
+  const json=await vastaus.json().catch(function(){return null});
+  if(!vastaus.ok&&vastaus.status!==404){ throw new Error("Scryfall vastasi "+vastaus.status); }
+  return json||{};
+}
+
+// Halpa testipyyntö jolla tarkistetaan ehtiikö nettiin ylipäätään.
+async function tarkistaYhteys(){
+  try{ const j=await kutsuRajapintaa("/cards/named?exact=Island"); return !!(j&&j.object==="card"); }
+  catch(e){ return false; }
+}
+
+const muodostaAvain=k=>k.setti?("sc:"+k.setti+"|"+(k.kerailynro||"")):("nm:"+siistiNimi(k.nimi));
+
+// Sama kortti voi löytyä usealla eri nimellä (splitkortit, DFC:t) — kerätään
+// kaikki mahdolliset "hakusanat" ettei erähaku menetä osumia turhaan.
+function vaihtoehtoisetNimet(kortti){
+  const nimet=new Set([kortti.name, kortti.name.split("//")[0]]);
+  (kortti.card_faces||[]).forEach(puoli=>nimet.add(puoli.name));
+  return [...nimet].map(n=>"nm:"+siistiNimi(n));
+}
+
+// Yksittäisen kortin tikapuu: kokeillaan tarkkaa osumaa, sitten "fuzzy"
+// (typo-toleranttia) hakua, ja lopuks ihan vapaata tekstihakua.
+async function etsiYksittainen(kortti){
+  const yritykset=[];
+  if(kortti.setti&&kortti.kerailynro)
+    yritykset.push(["exact","/cards/"+encodeURIComponent(kortti.setti)+"/"+encodeURIComponent(kortti.kerailynro)]);
+  yritykset.push(["exact","/cards/named?exact="+encodeURIComponent(kortti.nimi)+(kortti.setti?"&set="+encodeURIComponent(kortti.setti):"")]);
+  if(kortti.setti) yritykset.push(["exact","/cards/named?exact="+encodeURIComponent(kortti.nimi)]);
+  yritykset.push(["fuzzy","/cards/named?fuzzy="+encodeURIComponent(kortti.nimi)]);
+  yritykset.push(["haku","/cards/search?unique=cards&order=released&q="+encodeURIComponent('"'+kortti.nimi.replace(/"/g,"")+'"')]);
+  yritykset.push(["haku","/cards/search?unique=cards&order=released&q="+encodeURIComponent(kortti.nimi)]);
+  for(const [lahde,polku] of yritykset){
+    try{
+      const j=await kutsuRajapintaa(polku);
+      if(j&&j.object==="card") return {data:j,lahde:lahde};
+      if(j&&j.object==="list"&&j.data&&j.data.length) return {data:j.data[0],lahde:lahde};
+    }catch(virhe){ /* 404 tai tilapäinen verkkokatko: kokeillaan seuraavaa tikapuun askelta */ }
+  }
+  return null;
+}
+
+async function ratkaiseKortit(kortit,ilmoitaEdistyminen){
+  let valmiit=0;
+  const merkkaaEdistyminen=function(){ ilmoitaEdistyminen&&ilmoitaEdistyminen(++valmiit,kortit.length); };
+
+  // Ekaks katotaan löytyykö kaikki suoraan omasta välimuistista
+  const puuttuvat=[];
+  for(const k of kortit){
+    if(k.kiinnitetty&&k.data){ k.tila="ok"; merkkaaEdistyminen(); continue; }
+    const osuma=await haeValimuistista("kortit",muodostaAvain(k));
+    if(osuma){ k.data=osuma; k.tila="ok"; k.lahde=k.lahde||"valimuisti"; merkkaaEdistyminen(); }
+    else puuttuvat.push(k);
+  }
+  if(!puuttuvat.length) return;
+
+  // Sit yritetään erähakuna 75 kappaleen palasissa (nopeempaa jos toimii)
+  let loput=puuttuvat;
+  if(erahakuToimii){
+    const jaljelle=[];
+    for(let i=0;i<puuttuvat.length;i+=75){
+      const pala=puuttuvat.slice(i,i+75);
+      if(!erahakuToimii){ pala.forEach(k=>jaljelle.push(k)); continue; }
+      let json=null;
+      try{
+        json=await kutsuRajapintaa("/cards/collection",{method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({identifiers:pala.map(function(k){
+            return k.setti&&k.kerailynro?{set:k.setti,collector_number:k.kerailynro}
+                 : k.setti?{name:k.nimi,set:k.setti}:{name:k.nimi};})})});
+      }catch(virhe){ erahakuToimii=false; /* CORS-preflight kaatu, ei enää yritetä erähakuna */ }
+      if(!json){ pala.forEach(k=>jaljelle.push(k)); continue; }
+
+      const osumatAvaimella=new Map();
+      for(const c of (json.data||[])){
+        osumatAvaimella.set("sc:"+c.set+"|"+String(c.collector_number).toLowerCase(),c);
+        const nimet=vaihtoehtoisetNimet(c);
+        for(let n=0;n<nimet.length;n++) if(!osumatAvaimella.has(nimet[n])) osumatAvaimella.set(nimet[n],c);
+      }
+      for(const k of pala){
+        const c=(k.setti&&k.kerailynro&&osumatAvaimella.get("sc:"+k.setti+"|"+k.kerailynro))
+               ||osumatAvaimella.get("nm:"+siistiNimi(k.nimi));
+        if(c){ k.data=c; k.tila="ok"; k.lahde="tarkka"; await tallennaKortti(muodostaAvain(k),c); merkkaaEdistyminen(); }
+        else jaljelle.push(k);
+      }
+    }
+    loput=jaljelle;
+  }
+
+  // Loput käydään yksitellen läpi koko tikapuuta myöten
+  for(const k of loput){
+    const osuma=await etsiYksittainen(k);
+    if(osuma){ k.data=osuma.data; k.tila="ok"; k.lahde=osuma.lahde; await tallennaKortti(muodostaAvain(k),osuma.data); }
+    else{ k.data=null; k.tila="puuttuu"; k.lahde=null; }
+    merkkaaEdistyminen();
+  }
+}
+
+/* --- kuvan koon valinta: otetaan paras mikä on tarjolla --- */
+const KOKOJARJESTYS=["png","large","border_crop","normal","small"];
+function valitseKuvaUrl(uritt,toivottu){
+  if(!uritt) return null;
+  if(uritt[toivottu]) return uritt[toivottu];
+  for(let i=0;i<KOKOJARJESTYS.length;i++) if(uritt[KOKOJARJESTYS[i]]) return uritt[KOKOJARJESTYS[i]];
+  return null;
+}
+// Palauttaa listan tulostettavista "puolista" — yhden puolen kortille yks,
+// kaksipuoliselle (DFC) yks tai kaks riippuen halutaanko molemmat puolet.
+function kortinPuolet(kortti,toivottuKoko,haluaMolemmatPuolet){
+  if(!kortti) return [];
+  if(kortti.image_uris){
+    const u=valitseKuvaUrl(kortti.image_uris,toivottuKoko);
+    return u?[{url:u,nimike:kortti.name}]:[];
+  }
+  const puolet=(kortti.card_faces||[]).filter(p=>p.image_uris)
+    .map(p=>({url:valitseKuvaUrl(p.image_uris,toivottuKoko),nimike:p.name})).filter(p=>p.url);
+  if(!puolet.length) return [];
+  return haluaMolemmatPuolet?puolet:[puolet[0]];
+}
+const onKaksipuolinen=k=>!!(k&&!k.image_uris&&(k.card_faces||[]).some(p=>p.image_uris));
+// Scryfall merkkaa jokaisen painoksen skannauslaadun. "lowres" tarkoittaa
+// että ainut mitä heillä on on huono ennakkoskannaus — ja siihen ei
+// mikään tulostinasetus tässä maailmassa auta, koska pikseleitä ei ole.
+const onHuonolaatuinen=k=>!!(k&&(k.image_status==="lowres"||k.image_status==="placeholder"||k.highres_image===false));
+
+/* --- MPCFill (MPC Autofill) — yhteisön omat renderöinnit --------------------
+   Toinen kuvalähde Scryfallin rinnalle. Backend on avointa koodia ja
+   suunniteltu erillisille frontendeille, joten CORS on lähtökohtaisesti
+   auki. HUOM: itse kuvat asuu yhteisön Google Drive -kansioissa, joten
+   niiden luku kanvasille PDF:ää varten voi kaatua CORS-estoon — silloin
+   kortti tulostuu ääriviivana ja käyttäjä saa siitä selkeän varoituksen.
+   Rajapinta on epävirallinen: jos se muuttuu, haku vaan palauttaa tyhjää
+   eikä kaada mitään muuta.
+--------------------------------------------------------------------------- */
+const MPC_JUURI="https://mpcfill.com";
+const MPC_MAKSIMI=24;                       // ei haeta sataa vaihtoehtoa kerralla
+
+async function kutsuMpcta(polku,runko){
+  const vastaus=await fetch(MPC_JUURI+polku,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(runko)
+  });
+  if(!vastaus.ok) throw new Error("MPCFill vastasi "+vastaus.status);
+  return vastaus.json();
+}
+
+/** Hakee kortin nimellä MPCFill-renderöinnit. Palauttaa aina listan —
+    tyhjän jos mikään menee pieleen, ei koskaan heitä ulos asti. */
+async function haeMpcVaihtoehdot(nimi){
+  try{
+    const hakusana=nimi.toLowerCase().trim();
+    const hakuTulos=await kutsuMpcta("/2/searchResults/",{
+      searchSettings:{
+        searchTypeSettings:{fuzzySearch:false,filterCardbacks:false},
+        sourceSettings:{sources:null},
+        filterSettings:{minimumDPI:0,maximumDPI:1500,maximumSize:30,languages:[],includesTags:[],excludesTags:[]}
+      },
+      queries:[{query:hakusana,card_type:"CARD"}]
+    });
+    const tunnisteet=(((hakuTulos||{}).results||{})[hakusana]||{}).CARD||[];
+    if(!tunnisteet.length) return [];
+
+    const korttiTulos=await kutsuMpcta("/2/cards/",{card_identifiers:tunnisteet.slice(0,MPC_MAKSIMI)});
+    const kartta=(korttiTulos||{}).results||{};
+    const ulos=[];
+    for(const id of tunnisteet.slice(0,MPC_MAKSIMI)){
+      const c=kartta[id];
+      if(!c) continue;
+      ulos.push({
+        tunniste:id,
+        nimi:c.name||nimi,
+        lahdeNimi:c.source_name||"community",
+        dpi:c.dpi||0,
+        pikkukuva:c.small_thumbnail_url||c.medium_thumbnail_url||"",
+        // Paras selaimessa saatavilla oleva koko on Driven iso pikkukuva.
+        // Täysreso vaatis Google Drive API:n, mikä ei onnistu ilman avainta.
+        isokuva:"https://drive.google.com/thumbnail?sz=w1600&id="+encodeURIComponent(id)
+      });
+    }
+    return ulos;
+  }catch(e){ return []; }
+}
+
+/** Rakentaa MPCFill-valinnasta Scryfall-kortin näköisen olion, jotta koko
+    muu koodi (arkit, PDF, lista) toimii siihen ilman erikoistapauksia. */
+function mpcKortiksi(valinta,alkuperainenNimi){
+  return {
+    name:valinta.nimi||alkuperainenNimi,
+    image_uris:{png:valinta.isokuva,large:valinta.isokuva,normal:valinta.isokuva,small:valinta.pikkukuva||valinta.isokuva},
+    set:"mpc", collector_number:"", artist:valinta.lahdeNimi,
+    highres_image:valinta.dpi>=600, image_status:valinta.dpi>=600?"highres_scan":"lowres",
+    _mpc:true
+  };
+}
+
+/* --- PDF-luettavuuden ESITARKISTUS -----------------------------------------
+   MPC-kuvat asuu Google Drivessä, joka voi estää kanvas-luvun (CORS-taint).
+   Sen sijaan että käyttäjä huomais asian vasta PDF-viennin jälkeen, koetetaan
+   luettavuus HETI kun MPC-kuva valitaan: haetaan kuva, piirretään 1×1-
+   kanvasille ja yritetään lukea pikseli takaisin. Jos luku heittää virheen,
+   kuva on "tainted" eikä ikinä pääse PDF:ään — ja siitä kerrotaan heti
+   rivimerkillä, alapalkissa ja ennen vientiä.
+   Tulokset pidetään ajonaikaisessa Mapissa (ei välimuistissa levyllä),
+   koska Driven CORS-käytös voi muuttua istuntojen välillä.
+--------------------------------------------------------------------------- */
+const mpcLuettavuus=new Map();   // url -> true/false; ei avainta = ei vielä koetettu
+
+async function koettelePdfLuettavuus(url){
+  if(mpcLuettavuus.has(url)) return mpcLuettavuus.get(url);
+  let luettavissa=false;
+  const blobi=await haeKuvaBlobina(url);          // jos fetch+CORS onnistuu, luku onnistuu varmasti
+  if(blobi){ luettavissa=true; }
+  else{
+    try{
+      const img=await lataaKuvaElementtiin(url,true);
+      const koekanvas=document.createElement("canvas");
+      koekanvas.width=1; koekanvas.height=1;
+      const ctx=koekanvas.getContext("2d");
+      ctx.drawImage(img,0,0,1,1);
+      ctx.getImageData(0,0,1,1);                  // heittää SecurityErrorin jos tainted
+      luettavissa=true;
+    }catch(e){ luettavissa=false; }
+  }
+  mpcLuettavuus.set(url,luettavissa);
+  return luettavissa;
+}
+
+// Kortin "pääkuvan" url, jos kortti on MPC-lähteinen (muuten null)
+function mpcUrlKortista(data){
+  return (data&&data._mpc&&data.image_uris)?data.image_uris.png:null;
+}
+
+/** Koettelee kaikki listan MPC-kortit joita ei vielä ole koetettu, ja
+    päivittää näkymät kun tulokset on selvillä. Kutsutaan importin jälkeen
+    (välimuistista palautuneet MPC-valinnat) ja aina uuden valinnan jälkeen. */
+async function tarkistaMpcLuettavuudet(){
+  const koetettavat=new Set();
+  for(const k of TILA.kortit){
+    const u=mpcUrlKortista(k.data);
+    if(u&&!mpcLuettavuus.has(u)) koetettavat.add(u);
+  }
+  if(!koetettavat.size) return;
+  await Promise.all([...koetettavat].map(koettelePdfLuettavuus));
+  piirraKorttilista(); piirraArkit();
+}
+
+/* --- TOKENIT ---------------------------------------------------------------
+   Scryfallin korttidata kertoo jo valmiiksi mitkä tokenit kortti luo:
+   all_parts-listassa on component:"token" -merkityt osat ja niiden tarkat
+   Scryfall-id:t. Tunnistus ei siis maksa yhtään ylimääräistä API-kutsua —
+   vasta napin painallus hakee tokenkortin, ja senkin id:llä (ei nimellä,
+   koska "Soldier" nimenä osuis sataan eri korttiin).
+   Lisätty token on ihan tavallinen listarivi: stepperit, Art-valitsin,
+   PDF ja välimuisti toimii siihen ilman yhtäkään erikoistapausta.
+--------------------------------------------------------------------------- */
+
+// Kortin luomat tokenit. Token ei "luo itseään": jos rivi on jo itse token
+// tai emblem, nappia ei näytetä ollenkaan.
+function tokenOsatKortista(data){
+  if(!data||!data.all_parts) return [];
+  if(data.layout==="token"||data.layout==="emblem") return [];
+  return data.all_parts.filter(function(p){ return p.component==="token"&&p.id!==data.id; });
+}
+
+async function lisaaTokenit(kortti){
+  const osat=tokenOsatKortista(kortti.data);
+  if(!osat.length) return;
+  naytaTilaviesti("Adding "+osat.length+" token"+(osat.length===1?"":"s")+"…");
+  let lisatty=0;
+  for(const osa of osat){
+    const id="tok:"+osa.id;
+    // Sama token (esim. Treasure) voi tulla monesta kortista — kumuloidaan
+    // olemassa olevaan riviin, ei ikinä duplikaattirivejä.
+    const olemassa=TILA.kortit.find(k=>k.id===id);
+    if(olemassa){ olemassa.maara++; lisatty++; continue; }
+    let data=await haeValimuistista("kortit",id);
+    if(!data){
+      try{
+        const j=await kutsuRajapintaa("/cards/"+encodeURIComponent(osa.id));
+        if(j&&j.object==="card"){ data=j; await tallennaKortti(id,j); }
+      }catch(e){}
+    }
+    if(!data){ naytaTilaviesti("Couldn't fetch token "+osa.name+" — check connection and try again.","err"); continue; }
+    TILA.kortit.push({
+      id:id, nimi:data.name, setti:data.set||null,
+      kerailynro:String(data.collector_number||"").toLowerCase()||null,
+      maara:1, osio:"tokens", data:data, tila:"ok", lahde:"token", kiinnitetty:true
+    });
+    lisatty++;
+  }
+  if(lisatty) naytaTilaviesti("Tokens added — adjust counts with the +/- steppers. Note: re-importing the text list rebuilds it without tokens.","good");
+  piirraKorttilista(); piirraArkit();
+}
+
+/* --- KORTTIHAKU EHDOTUKSILLA -------------------------------------------------
+   Scryfallin /cards/autocomplete on GET, joten se ei tarvitse CORS-preflightia
+   ja toimii myös file://-tilassa (toisin kuin erähaun POST). Palauttaa max 20
+   nimeä, suosii alkuosumia ja jättää huomiotta välimerkit ja kirjainkoon.
+
+   Hylkäsin vaihtoehdon /catalog/card-names: se toisi kaikki ~30 000 nimeä
+   kerralla offline-käyttöön, mutta maksaisi monen megatavun latauksen heti
+   ensimmäisestä näppäinpainalluksesta. Autocomplete antaa saman kattavuuden
+   noin kilotavulla per haku.
+
+   Optimoinnit: 180 ms debounce (ei haeta joka näppäimestä), istunnon sisäinen
+   välimuisti per hakusana (sama etuliite ei koskaan mene verkkoon kahdesti),
+   ja vanhentuneiden vastausten hylkäys juoksevalla numerolla.
+--------------------------------------------------------------------------- */
+const hakuValimuisti=new Map();     // hakusana -> nimilista, vain tämän istunnon ajan
+let hakuAjastin=null, hakuJuokseva=0, hakuNimet=[], hakuValittu=-1;
+
+async function haeEhdotukset(hakusana){
+  const avain=hakusana.toLowerCase().trim();
+  if(hakuValimuisti.has(avain)) return hakuValimuisti.get(avain);
+  const j=await kutsuRajapintaa("/cards/autocomplete?q="+encodeURIComponent(avain));
+  const nimet=(j&&j.data)||[];
+  hakuValimuisti.set(avain,nimet);
+  return nimet;
+}
+
+function suljeEhdotukset(){
+  $("ehdotukset").classList.remove("on");
+  $("hakuKentta").setAttribute("aria-expanded","false");
+  hakuNimet=[]; hakuValittu=-1;
+}
+
+function piirraEhdotukset(nimet,hakusana){
+  const kotelo=$("ehdotukset");
+  hakuNimet=nimet; hakuValittu=-1;
+  if(!nimet.length){
+    kotelo.innerHTML='<div class="tyhja">No cards match “'+turvaaHtml(hakusana)+'”.</div>';
+  }else{
+    const pituus=hakusana.trim().length;
+    kotelo.innerHTML=nimet.map(function(nimi,i){
+      // Korostetaan osuva alkuosa vain jos nimi oikeasti alkaa hakusanalla
+      const alkaa=nimi.toLowerCase().indexOf(hakusana.toLowerCase().trim())===0;
+      const teksti=alkaa
+        ? "<b>"+turvaaHtml(nimi.slice(0,pituus))+"</b>"+turvaaHtml(nimi.slice(pituus))
+        : turvaaHtml(nimi);
+      return '<button class="ehdotus" type="button" role="option" aria-selected="false" data-nimi="'+
+        turvaaHtml(nimi)+'" data-i="'+i+'"><span>'+teksti+'</span><span class="plus">+</span></button>';
+    }).join("");
+  }
+  kotelo.classList.add("on");
+  $("hakuKentta").setAttribute("aria-expanded","true");
+}
+
+// Korostuksen siirto näppäimistöllä; pidetään valittu rivi näkyvissä
+function siirraValintaa(muutos){
+  if(!hakuNimet.length) return;
+  hakuValittu=(hakuValittu+muutos+hakuNimet.length)%hakuNimet.length;
+  const rivit=$("ehdotukset").querySelectorAll(".ehdotus");
+  rivit.forEach(function(r,i){
+    const on=(i===hakuValittu);
+    r.classList.toggle("valittu",on);
+    r.setAttribute("aria-selected",String(on));
+    if(on) r.scrollIntoView({block:"nearest"});
+  });
+}
+
+/** Lisää kortin nimellä listaan. Käyttää samaa hakutikapuuta kuin dekkilistan
+    tuonti, joten välimuisti, hinnat, tokenit ja PDF toimii identtisesti. */
+async function lisaaKorttiNimella(nimi){
+  const avain=siistiNimi(nimi)+"||";
+  const olemassa=TILA.kortit.find(k=>k.id===avain);
+  if(olemassa){                                   // jo listalla -> kasvatetaan määrää
+    olemassa.maara++;
+    piirraKorttilista(); piirraArkit();
+    naytaTilaviesti(olemassa.nimi+" → "+olemassa.maara+" copies.","good");
+    return;
+  }
+  naytaTilaviesti("Adding "+nimi+"…");
+  const kortti={id:avain,nimi:nimi,setti:null,kerailynro:null,maara:1,osio:"main",
+                data:null,tila:"odottaa",lahde:null,kiinnitetty:false};
+  let data=await haeValimuistista("kortit",muodostaAvain(kortti));
+  if(data){ kortti.data=data; kortti.tila="ok"; kortti.lahde="valimuisti"; }
+  else{
+    const osuma=await etsiYksittainen(kortti);
+    if(osuma){
+      kortti.data=osuma.data; kortti.tila="ok"; kortti.lahde=osuma.lahde;
+      await tallennaKortti(muodostaAvain(kortti),osuma.data);
+    }else{
+      naytaTilaviesti("Couldn't find “"+nimi+"”. Check the spelling or your connection.","err");
+      return;
+    }
+  }
+  TILA.kortit.push(kortti);
+  piirraKorttilista(); piirraArkit();
+  naytaTilaviesti("Added "+kortti.data.name+". Note: re-importing the text list rebuilds it without manual additions.","good");
+}
+
+function valitseEhdotus(nimi){
+  $("hakuKentta").value="";
+  suljeEhdotukset();
+  lisaaKorttiNimella(nimi);
+}
+
+/* --- HINNAT JA TRENDIT -------------------------------------------------------
+   Scryfallin korttidatassa tulee ILMAISEKSI mukana päivittäin päivittyvät
+   markkinahinnat (prices.usd = TCGplayer, prices.eur = Cardmarket). Niiden
+   näyttäminen ei maksa yhtään ylimääräistä API-kutsua.
+
+   "Trendiin" ei ole avaimetonta rajapintaa missään (TCGplayer/Cardmarket
+   vaatii partneriavaimet, MTGJSONin historia on 100+ MB bulkkitiedosto) —
+   joten trendi rakennetaan ITSE: joka päivä kun kortti haetaan tai
+   virkistetään, hintaan otetaan hetkikuva korttiolion kylkeen välimuistiin.
+   Toisesta käyttöpäivästä alkaen nuolet perustuu oikeaan havaittuun
+   muutokseen. Historia katkaistaan 30 merkintään per kortti.
+--------------------------------------------------------------------------- */
+
+// Ottaa tämän päivän hintahetkikuvan kortin kylkeen. Saman päivän toinen
+// haku korvaa aiemman merkinnän — yksi rivi per kalenteripäivä.
+function kirjaaHintahistoria(data){
+  if(!data||!data.prices) return;
+  const usd=parseFloat(data.prices.usd||data.prices.usd_foil||"")||null;
+  const eur=parseFloat(data.prices.eur||data.prices.eur_foil||"")||null;
+  if(usd===null&&eur===null) return;
+  const paiva=new Date().toISOString().slice(0,10);
+  const historia=data._hintahistoria=(data._hintahistoria||[]);
+  if(historia.length&&historia[historia.length-1].p===paiva) historia[historia.length-1]={p:paiva,usd:usd,eur:eur};
+  else historia.push({p:paiva,usd:usd,eur:eur});
+  if(historia.length>30) historia.splice(0,historia.length-30);
+}
+
+// Yksi tallennuspaikka kaikille tuoreena haetuille korteille: hetkikuva
+// otetaan AINA ennen välimuistiin vientiä, niin historia karttuu itsestään.
+async function tallennaKortti(avain,data){
+  kirjaaHintahistoria(data);
+  await tallennaValimuistiin("kortit",avain,data);
+}
+
+// Kortin nykyhinta: ensisijaisesti prices-kentästä, varalla historian
+// viimeisin merkintä (esim. offline-tilassa välimuistista palannut kortti).
+function hintaKortista(data){
+  if(!data) return null;
+  if(data.prices){
+    const usd=parseFloat(data.prices.usd||data.prices.usd_foil||"")||null;
+    const eur=parseFloat(data.prices.eur||data.prices.eur_foil||"")||null;
+    if(usd!==null||eur!==null) return {usd:usd,eur:eur};
+  }
+  const h=data._hintahistoria;
+  return (h&&h.length)?{usd:h[h.length-1].usd,eur:h[h.length-1].eur}:null;
+}
+
+// Trendi = viimeisin päivä vs. edellinen ERI päivä. Alle 1 % heilunta
+// näytetään tasaisena, ettei nuolet vilku senttien satunnaiskohinasta.
+function hintaTrendi(data,valuutta){
+  const h=data&&data._hintahistoria;
+  if(!h||h.length<2) return null;
+  const nyt=h[h.length-1][valuutta];
+  let ennen=null;
+  for(let i=h.length-2;i>=0;i--){
+    if(h[i].p!==h[h.length-1].p&&h[i][valuutta]!=null){ ennen=h[i][valuutta]; break; }
+  }
+  if(nyt==null||ennen==null||ennen===0) return null;
+  const prosentti=(nyt-ennen)/ennen*100;
+  if(Math.abs(prosentti)<1) return {suunta:0,prosentti:0};
+  return {suunta:prosentti>0?1:-1,prosentti:Math.abs(prosentti)};
+}
+
+/** Virkistää välimuistista palanneiden korttien hinnat taustalla, jos
+    tämän päivän hetkikuvaa ei vielä ole. Käyttää erähakua (75/pyyntö) —
+    jos POST ei kulje (file://-CORS), hinnat jää eiliselle eikä mikään
+    hajoa, nuolet vaan odottaa seuraavaa onnistunutta päivitystä. */
+async function paivitaVanhentuneetHinnat(){
+  if(!erahakuToimii) return;
+  const tanaan=new Date().toISOString().slice(0,10);
+  const vanhentuneet=TILA.kortit.filter(function(k){
+    if(!k.data||!k.data.id||k.data._mpc) return false;
+    const h=k.data._hintahistoria;
+    return !h||!h.length||h[h.length-1].p!==tanaan;
+  });
+  if(!vanhentuneet.length) return;
+  for(let i=0;i<vanhentuneet.length;i+=75){
+    const pala=vanhentuneet.slice(i,i+75);
+    let json=null;
+    try{
+      json=await kutsuRajapintaa("/cards/collection",{method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({identifiers:pala.map(k=>({id:k.data.id}))})});
+    }catch(e){ return; }
+    const kartta=new Map(((json&&json.data)||[]).map(c=>[c.id,c]));
+    for(const k of pala){
+      const tuore=kartta.get(k.data.id);
+      if(!tuore) continue;
+      tuore._hintahistoria=k.data._hintahistoria||[];   // vanha historia säilyy
+      k.data=tuore;
+      const avain=(k.id.indexOf("tok:")===0)?k.id:muodostaAvain(k);
+      await tallennaKortti(avain,tuore);
+    }
+  }
+  piirraKorttilista(); piirraArkit();
+}
+
+/* --- kuvan lataus: kokeillaan välimuistia, sit verkkoa, sit CORS-kuvana --- */
+const objektiUrlit=new Set();
+function siivoaObjektiUrlit(){ objektiUrlit.forEach(u=>URL.revokeObjectURL(u)); objektiUrlit.clear(); }
+function lataaKuvaElementtiin(lahde,tarvitaanCors){
+  return new Promise(function(ok,eiOk){
+    const img=new Image();
+    if(tarvitaanCors) img.crossOrigin="anonymous";
+    img.onload=function(){ok(img)}; img.onerror=function(){eiOk(new Error("kuva ei latautunut"))};
+    img.decoding="async"; img.src=lahde;
+  });
+}
+async function haeKuvaBlobina(url){
+  let blobi=await haeValimuistista("kuvat",url);
+  if(blobi) return blobi;
+  try{
+    const vastaus=await fetch(url,{mode:"cors"});
+    if(!vastaus.ok) return null;
+    blobi=await vastaus.blob();
+    if(TILA.cacheImgs) await tallennaValimuistiin("kuvat",url,blobi);
+    return blobi;
+  }catch(e){ return null; }
+}
+async function haeNaytettavaUrl(url){
+  const blobi=await haeKuvaBlobina(url);
+  if(blobi){ const u=URL.createObjectURL(blobi); objektiUrlit.add(u); return u; }
+  return url; // ei blobia -> annetaan selaimen hoitaa suoraan alkuperäisestä osoitteesta
+}
+// Kanvasille kelpaava bittikartta PDF:ää varten. Palauttaa null jos
+// pikseleitä ei syystä tai toisesta pysty lukemaan (esim. CORS-esto).
+async function haeBittikartta(url){
+  const blobi=await haeKuvaBlobina(url);
+  if(blobi){
+    const u=URL.createObjectURL(blobi); objektiUrlit.add(u);
+    try{ return await lataaKuvaElementtiin(u); }catch(e){}
+  }
+  try{ return await lataaKuvaElementtiin(url,true); }catch(e){ return null; }
+}
+
+/* =========================================================================
+   § 4  SOVELLUKSEN TILA
+   Kaikki asetukset yhessä oliossa, tallentuu selaimen localStorageen niin
+   ettei tarvi säätää uudelleen joka kerta kun avaa sivun.
+   ========================================================================= */
+const PAPERIKOOT={A4:{w:210,h:297},LETTER:{w:215.9,h:279.4},A4L:{w:297,h:210},LETTERL:{w:279.4,h:215.9}};
+const TILA={
+  kortit:[], paper:"A4", quality:"png", cardW:63, cardH:88, gap:0, margin:6.5,
+  guides:"marks", ruler:true, dfc:true, cacheImgs:true, enc:"jpeg", hinta:"eur"
+};
+// Lyhyt apuri elementin hakuun — ihan sama juttu ku jQueryn $ aikoinaan,
+// paitsi ilman jQueryä. Kaikki devit käyttää tätä, ei tässä nyt kikkailla.
+const $=id=>document.getElementById(id);
+const turvaaHtml=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function lataaAsetukset(){
+  try{
+    Object.assign(TILA,JSON.parse(localStorage.getItem("golem.asetukset")||"{}"));
+    $("deckIn").value=localStorage.getItem("golem.dekki")||"";
+  }catch(e){ /* localStorage voi olla lukossa yksityisessä selauksessa, ei se haittaa */ }
+  ["paper","quality","guides","cardW","cardH","gap","margin","enc","hinta"].forEach(k=>{$(k).value=TILA[k]});
+  ["ruler","dfc","cacheImgs"].forEach(k=>{$(k).checked=TILA[k]});
+}
+function tallennaAsetukset(){
+  const kopio={};
+  ["paper","quality","cardW","cardH","gap","margin","guides","ruler","dfc","cacheImgs","enc","hinta"]
+    .forEach(k=>{kopio[k]=TILA[k]});
+  try{
+    localStorage.setItem("golem.asetukset",JSON.stringify(kopio));
+    localStorage.setItem("golem.dekki",$("deckIn").value);
+  }catch(e){}
+}
+function lueLomakkeenArvot(){
+  TILA.paper=$("paper").value; TILA.quality=$("quality").value; TILA.guides=$("guides").value; TILA.enc=$("enc").value; TILA.hinta=$("hinta").value;
+  TILA.cardW=Math.max(20,parseFloat($("cardW").value)||63);
+  TILA.cardH=Math.max(20,parseFloat($("cardH").value)||88);
+  TILA.gap=Math.min(10,Math.max(0,parseFloat($("gap").value)||0));
+  TILA.margin=Math.min(25,Math.max(0,parseFloat($("margin").value)||0));
+  TILA.ruler=$("ruler").checked; TILA.dfc=$("dfc").checked; TILA.cacheImgs=$("cacheImgs").checked;
+  tallennaAsetukset();
+}
+function naytaTilaviesti(viesti,luokka){
+  const el=$("status"); el.textContent=viesti; el.className="status"+(luokka?" "+luokka:"");
+}
+function asetaEdistyminen(osuus){ $("progBar").style.width=(osuus*100).toFixed(1)+"%"; }
+
+/* =========================================================================
+   § 5  KORTTILISTAN PIIRTO
+   ========================================================================= */
+let listanSuodatin="", naytaVainPuuttuvat=false;
+
+function nakyvatKortit(){
+  const haku=listanSuodatin.trim().toLowerCase();
+  return TILA.kortit.filter(function(k){
+    if(naytaVainPuuttuvat&&k.tila!=="puuttuu") return false;
+    if(!haku) return true;
+    const hakuteksti=[k.nimi,k.data&&k.data.name,k.data&&k.data.set,k.data&&k.data.artist,k.data&&k.data.type_line]
+      .filter(Boolean).join(" ").toLowerCase();
+    return hakuteksti.indexOf(haku)>-1;
+  });
+}
+// Pidetään lukumääräkenttä just niin leveänä ku numero vaatii, ei leveempänä
+function sovitaMaaraKentanLeveys(el){ el.style.setProperty("--w",String(Math.max(1,(el.value||"").length))); }
+
+function piirraKorttilista(){
+  const kontti=$("cardList"), tyhjaViesti=$("listEmpty");
+  kontti.innerHTML="";
+  const puuttuvienMaara=TILA.kortit.filter(k=>k.tila==="puuttuu").length;
+  const puuttuvatNappi=$("chipMissing");
+  puuttuvatNappi.textContent="Missing "+puuttuvienMaara;
+  puuttuvatNappi.disabled=!puuttuvienMaara;
+  if(!puuttuvienMaara) naytaVainPuuttuvat=false;
+  puuttuvatNappi.classList.toggle("on",naytaVainPuuttuvat&&!!puuttuvienMaara);
+
+  const rivit=nakyvatKortit();
+  $("listCount").textContent=TILA.kortit.length
+    ? "· "+(rivit.length===TILA.kortit.length?TILA.kortit.length+" unique":rivit.length+" of "+TILA.kortit.length)
+    : "";
+  if(!TILA.kortit.length){ tyhjaViesti.textContent="No cards yet."; tyhjaViesti.style.display="block"; return; }
+  if(!rivit.length){ tyhjaViesti.textContent="Nothing matches that filter."; tyhjaViesti.style.display="block"; return; }
+  tyhjaViesti.style.display="none";
+
+  for(const k of rivit){
+    const rivi=document.createElement("div");
+    rivi.className="item"+(k.tila==="puuttuu"?" missing":"");
+    rivi.dataset.eid=k.id;
+
+    const pikkukuva=k.data?(kortinPuolet(k.data,"small",false)[0]||{}).url:null;
+    const tokenOsat=tokenOsatKortista(k.data);
+    const merkit=[];
+    if(k.lahde==="token") merkit.push('<span class="badge dfc" title="Token card created by another card in your list">token</span>');
+    if(k.lahde==="fuzzy") merkit.push('<span class="badge warn">fuzzy</span>');
+    if(k.lahde==="haku") merkit.push('<span class="badge warn">guessed</span>');
+    if(k.tila==="puuttuu") merkit.push('<span class="badge bad">no image</span>');
+    if(onHuonolaatuinen(k.data)) merkit.push('<span class="badge warn" title="Scryfall only has a low-resolution scan of this printing. Try Art for a sharper one.">low-res scan</span>');
+    if(onKaksipuolinen(k.data)) merkit.push('<span class="badge dfc">2 faces</span>');
+    if(k.data&&k.data._mpc){
+      merkit.push('<span class="badge dfc" title="Community render from MPC Autofill">mpcfill</span>');
+      const koetila=mpcLuettavuus.get(mpcUrlKortista(k.data));
+      if(koetila===false) merkit.push('<span class="badge bad" title="Google Drive blocks canvas access for this image — it cannot be embedded in the PDF and will print as a named outline. Pick different art.">no PDF embed</span>');
+      else if(koetila===undefined) merkit.push('<span class="badge warn" title="Testing whether this image can be embedded in the PDF…">checking…</span>');
+    }
+
+    const metarivi=k.data
+      ?((k.data.set||"").toUpperCase()+" · "+(k.data.collector_number||"")+" · "+(k.data.artist||"—"))
+      :((k.setti?k.setti.toUpperCase()+" · ":"")+"not found");
+
+    // Hinta + trendinuoli metarivin alkuun (loppu katkeaisi ellipsiin desktopilla)
+    let hintaHtml="";
+    if(TILA.hinta!=="off"&&k.data){
+      const hinta=hintaKortista(k.data);
+      const arvo=hinta?(TILA.hinta==="usd"?hinta.usd:hinta.eur):null;
+      if(arvo!=null){
+        const trendi=hintaTrendi(k.data,TILA.hinta);
+        const nuoli=!trendi?"":trendi.suunta>0
+          ?' <span class="ylos" title="Up '+trendi.prosentti.toFixed(1)+'% since last observed price">↑'+trendi.prosentti.toFixed(0)+'%</span>'
+          :trendi.suunta<0
+          ?' <span class="alas" title="Down '+trendi.prosentti.toFixed(1)+'% since last observed price">↓'+trendi.prosentti.toFixed(0)+'%</span>'
+          :"";
+        hintaHtml='<span class="hinta">'+(TILA.hinta==="usd"?"$":"€")+arvo.toFixed(2)+'</span>'+nuoli+" · ";
+      }
+    }
+
+    rivi.innerHTML=(pikkukuva?'<img class="thumb" src="'+pikkukuva+'" alt="" loading="lazy">':'<div class="thumb ph">N/A</div>')+
+      '<div class="info"><div class="nm">'+turvaaHtml(k.data?k.data.name:k.nimi)+'</div>'+
+      '<div class="badges">'+merkit.join("")+'</div>'+
+      '<div class="meta" title="'+turvaaHtml(metarivi)+'">'+hintaHtml+turvaaHtml(metarivi)+'</div></div>'+
+      '<div class="acts">'+
+        '<button class="stepbtn" data-miinus="'+k.id+'" type="button" aria-label="Remove one copy">'+
+          '<svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>'+
+        '<input class="qty" type="number" inputmode="numeric" min="0" value="'+k.maara+'" data-maara="'+k.id+'" style="--w:'+String(k.maara).length+'" aria-label="Copies">'+
+        '<button class="stepbtn" data-plus="'+k.id+'" type="button" aria-label="Add one copy">'+
+          '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>'+
+        (tokenOsat.length?('<button class="stepbtn tok" data-tokenit="'+k.id+'" type="button" '+
+          'title="Add tokens this card creates: '+turvaaHtml(tokenOsat.map(o=>o.name).join(", "))+'" '+
+          'aria-label="Add tokens">'+
+          '<svg viewBox="0 0 24 24"><circle cx="9.5" cy="12" r="6.5"/><path d="M19 9v6M16 12h6"/></svg></button>'):'')+
+        '<button class="btn sm ghost" data-taide="'+k.id+'">Art</button>'+
+        '<button class="btn sm ghost" data-poista="'+k.id+'" aria-label="Remove">×</button>'+
+      '</div>';
+    kontti.appendChild(rivi);
+  }
+}
+
+/* =========================================================================
+   § 6  ARKIN LAYOUT-LASKENTA
+   Yks ja sama laskentafunktio syöttää sekä ruudulla näkyvän esikatselun
+   että lopullisen PDF:n — näin esikatselu ei voi ikinä valehdella
+   siitä mitä tulostimesta tulee ulos.
+   ========================================================================= */
+function laskeMitat(){
+  const paperi=PAPERIKOOT[TILA.paper], kw=TILA.cardW, kh=TILA.cardH, valiT=TILA.gap, reunus=TILA.margin;
+  const sarakkeet=Math.max(1,Math.floor((paperi.w-2*reunus+valiT)/(kw+valiT)));
+  const rivit=Math.max(1,Math.floor((paperi.h-2*reunus+valiT)/(kh+valiT)));
+  const ruudukonLeveys=sarakkeet*kw+(sarakkeet-1)*valiT;
+  const ruudukonKorkeus=rivit*kh+(rivit-1)*valiT;
+  return{
+    paperi:paperi, kw:kw, kh:kh, valiT:valiT, sarakkeet:sarakkeet, rivit:rivit,
+    perArkki:sarakkeet*rivit, ruudukonLeveys:ruudukonLeveys, ruudukonKorkeus:ruudukonKorkeus,
+    reunusX:(paperi.w-ruudukonLeveys)/2, reunusY:(paperi.h-ruudukonKorkeus)/2
+  };
+}
+// Litistää kaikki kortit + kappalemäärät + puolet yhdeksi tasaiseksi
+// listaksi "yksiköitä" — jokainen yksikkö on yksi ruutu jollekin arkille.
+function litistaYksikoiksi(){
+  const yksikot=[];
+  for(const k of TILA.kortit){
+    if(k.maara<=0) continue;
+    const puolet=kortinPuolet(k.data,TILA.quality,TILA.dfc);
+    for(let i=0;i<k.maara;i++){
+      if(!puolet.length) yksikot.push({puuttuu:true,nimi:k.nimi,eid:k.id});
+      else puolet.forEach(p=>yksikot.push({url:p.url,nimi:p.nimike,eid:k.id}));
+    }
+  }
+  return yksikot;
+}
+// Leikkausviivojen x/y-koordinaatit millimetreinä
+function leikkausviivojenKoordinaatit(g){
+  const xt=[], yt=[];
+  for(let s=0;s<=g.sarakkeet;s++){
+    const x=g.reunusX+s*(g.kw+g.valiT);
+    xt.push(s===g.sarakkeet?x-g.valiT:x);
+    if(g.valiT&&s<g.sarakkeet) xt.push(x+g.kw);
+  }
+  for(let r=0;r<=g.rivit;r++){
+    const y=g.reunusY+r*(g.kh+g.valiT);
+    yt.push(r===g.rivit?y-g.valiT:y);
+    if(g.valiT&&r<g.rivit) yt.push(y+g.kh);
+  }
+  return{xt:xt,yt:yt};
+}
+
+const ESIMERKKIDEKKI=[
+  "4 Ragavan, Nimble Pilferer","4 Lightning Bolt","4 Wrenn and Six",
+  "3 Dragon's Rage Channeler","2 Murktide Regent","2 Fire // Ice",
+  "1 Brazen Borrower","2 Unholy Heat","1 Delver of the Secrets"
+].join("\n");
+
+// Ekakäynnistyksen "haamuarkki": näytetään oikean kokoinen tyhjä paperi jo
+// ennen ku käyttäjä on tuonu yhtään korttia, ettei näkymä oo pelkkä tyhjyys.
+function piirraHaamuArkki(kontti,g,mm){
+  const kaari=document.createElement("div"); kaari.className="sheetwrap";
+  const arkki=document.createElement("div");
+  arkki.className="sheet ghost";
+  arkki.style.width=mm(g.paperi.w); arkki.style.height=mm(g.paperi.h);
+  for(let i=0;i<g.perArkki;i++){
+    const s=i%g.sarakkeet, r=Math.floor(i/g.sarakkeet);
+    arkki.insertAdjacentHTML("beforeend",'<div class="ghostSlot" style="left:'+mm(g.reunusX+s*(g.kw+g.valiT))+
+      ';top:'+mm(g.reunusY+r*(g.kh+g.valiT))+';width:'+mm(g.kw)+';height:'+mm(g.kh)+'"></div>');
+  }
+  arkki.insertAdjacentHTML("beforeend",
+    '<div class="ghostMsg"><h3>'+g.sarakkeet+' × '+g.rivit+' on '+TILA.paper.replace(/L$/," landscape")+'</h3>'+
+    '<p>'+g.perArkki+' cards per sheet at '+g.kw+' × '+g.kh+' mm. Paste a deck list on the left, or try one.</p>'+
+    '<button type="button" id="btnSample">Load a sample deck</button></div>');
+  kaari.appendChild(arkki); kontti.appendChild(kaari);
+  arkki.querySelector("#btnSample").onclick=function(){
+    $("deckIn").value=ESIMERKKIDEKKI; tallennaAsetukset(); tuoDekki();
+  };
+}
+
+// Muistetaan edellinen kokonaismäärä, jotta pomppuanimaatio ajetaan VAIN
+// kun luku oikeasti muuttuu — ei joka kerta kun arkit piirretään uusiks.
+let _edellinenKokonaismaara=-1;
+function paivitaAlapalkinTiedot(korttienMaara,arkkienMaara,g){
+  const el=$("dockMeta");
+  const muuttui=(korttienMaara!==_edellinenKokonaismaara&&_edellinenKokonaismaara!==-1);
+  _edellinenKokonaismaara=korttienMaara;
+  const pomppuLuokka=muuttui?' class="pomppu"':'';
+  if(!korttienMaara){ el.innerHTML="<span>No cards yet · "+g.sarakkeet+"×"+g.rivit+" per sheet</span>"; return; }
+  const tyhjatRuudut=arkkienMaara*g.perArkki-korttienMaara;
+  const puuttuvienMaara=TILA.kortit.filter(k=>k.tila==="puuttuu").length;
+  const huonolaatuisia=TILA.kortit.filter(k=>onHuonolaatuinen(k.data)).length;
+  const pdfEstettyja=TILA.kortit.filter(function(k){
+    const u=mpcUrlKortista(k.data);
+    return u&&k.maara>0&&mpcLuettavuus.get(u)===false;
+  }).length;
+  // Pakan markkina-arvo — eli summa jonka proxyilija EI maksa. Aihepiirin
+  // paras tunnusluku, joten se ansaitsee paikkansa alapalkissa.
+  let arvoHtml="";
+  if(TILA.hinta!=="off"){
+    let summa=0,hinnoiteltuja=0;
+    for(const k of TILA.kortit){
+      if(k.maara<=0) continue;
+      const hinta=hintaKortista(k.data);
+      const arvo=hinta?(TILA.hinta==="usd"?hinta.usd:hinta.eur):null;
+      if(arvo!=null){ summa+=arvo*k.maara; hinnoiteltuja++; }
+    }
+    if(hinnoiteltuja) arvoHtml="<span title='Market value of the real cards — a.k.a. what you are not paying'>value ~"+
+      (TILA.hinta==="usd"?"$":"€")+(summa>=100?summa.toFixed(0):summa.toFixed(2))+"</span>";
+  }
+  el.innerHTML="<span><b"+pomppuLuokka+">"+korttienMaara+"</b> cards</span><span><b>"+arkkienMaara+"</b> sheet"+(arkkienMaara===1?"":"s")+"</span>"+
+    "<span>"+tyhjatRuudut+" blank</span>"+arvoHtml+(puuttuvienMaara?"<span class='bad'>"+puuttuvienMaara+" missing</span>":"")+
+    (huonolaatuisia?"<span class='bad'>"+huonolaatuisia+" low-res</span>":"")+
+    (pdfEstettyja?"<span class='bad'>"+pdfEstettyja+" blocked for PDF</span>":"");
+}
+
+async function piirraArkit(){
+  lueLomakkeenArvot(); siivoaObjektiUrlit();
+  const g=laskeMitat(), yksikot=litistaYksikoiksi(), arkkienMaara=Math.ceil(yksikot.length/g.perArkki)||0;
+  $("sCards").textContent=yksikot.length;
+  $("sSheets").textContent=arkkienMaara;
+  $("sGrid").textContent=g.sarakkeet+" × "+g.rivit;
+  $("sBlank").textContent=arkkienMaara?arkkienMaara*g.perArkki-yksikot.length:0;
+  $("pageStyle").textContent="@page{size:"+g.paperi.w+"mm "+g.paperi.h+"mm;margin:0}";
+  paivitaAlapalkinTiedot(yksikot.length,arkkienMaara,g);
+
+  const kontti=$("sheets"); kontti.innerHTML="";
+  const mm=n=>n.toFixed(3)+"mm";
+  if(!arkkienMaara){ piirraHaamuArkki(kontti,g,mm); sovitaNakymaan(); return; }
+
+  for(let a=0;a<arkkienMaara;a++){
+    const arkki=document.createElement("div");
+    arkki.className="sheet";
+    arkki.style.width=mm(g.paperi.w); arkki.style.height=mm(g.paperi.h);
+    arkki.insertAdjacentHTML("beforeend",'<div class="sheetno">Sheet '+(a+1)+' / '+arkkienMaara+' · '+TILA.paper+'</div>');
+
+    for(let i=0;i<g.perArkki;i++){
+      const yks=yksikot[a*g.perArkki+i]; if(!yks) break;
+      const s=i%g.sarakkeet, r=Math.floor(i/g.sarakkeet);
+      const ruutu=document.createElement("div");
+      ruutu.className="slot"; ruutu.dataset.eid=yks.eid||""; ruutu.title=yks.nimi;
+      ruutu.style.cssText+="left:"+mm(g.reunusX+s*(g.kw+g.valiT))+";top:"+mm(g.reunusY+r*(g.kh+g.valiT))+
+                           ";width:"+mm(g.kw)+";height:"+mm(g.kh);
+      if(yks.puuttuu){
+        ruutu.innerHTML='<div class="miss"><b>'+turvaaHtml(yks.nimi)+'</b><span>proxy — no image</span></div>';
+      }else{
+        const img=new Image(); img.alt=yks.nimi; ruutu.appendChild(img);
+        haeNaytettavaUrl(yks.url).then(function(src){ img.src=src; });
+      }
+      arkki.appendChild(ruutu);
+    }
+
+    if(TILA.guides!=="none"){
+      const koord=leikkausviivojenKoordinaatit(g), viivanPaksuus=.2;
+      if(TILA.guides==="lines"){
+        koord.xt.forEach(x=>arkki.insertAdjacentHTML("beforeend",'<div class="cutline" style="left:'+mm(x-viivanPaksuus/2)+';top:0;width:'+mm(viivanPaksuus)+';height:'+mm(g.paperi.h)+'"></div>'));
+        koord.yt.forEach(y=>arkki.insertAdjacentHTML("beforeend",'<div class="cutline" style="top:'+mm(y-viivanPaksuus/2)+';left:0;height:'+mm(viivanPaksuus)+';width:'+mm(g.paperi.w)+'"></div>'));
+      }else{
+        const merkinPituusY=Math.max(1.5,Math.min(4,g.reunusY-1.5)), merkinPituusX=Math.max(1.5,Math.min(4,g.reunusX-1.5));
+        koord.xt.forEach(function(x){
+          arkki.insertAdjacentHTML("beforeend",'<div class="mark" style="left:'+mm(x-viivanPaksuus/2)+';top:'+mm(g.reunusY-merkinPituusY-1)+';width:'+mm(viivanPaksuus)+';height:'+mm(merkinPituusY)+'"></div>');
+          arkki.insertAdjacentHTML("beforeend",'<div class="mark" style="left:'+mm(x-viivanPaksuus/2)+';top:'+mm(g.reunusY+g.ruudukonKorkeus+1)+';width:'+mm(viivanPaksuus)+';height:'+mm(merkinPituusY)+'"></div>');});
+        koord.yt.forEach(function(y){
+          arkki.insertAdjacentHTML("beforeend",'<div class="mark" style="top:'+mm(y-viivanPaksuus/2)+';left:'+mm(g.reunusX-merkinPituusX-1)+';height:'+mm(viivanPaksuus)+';width:'+mm(merkinPituusX)+'"></div>');
+          arkki.insertAdjacentHTML("beforeend",'<div class="mark" style="top:'+mm(y-viivanPaksuus/2)+';left:'+mm(g.reunusX+g.ruudukonLeveys+1)+';height:'+mm(viivanPaksuus)+';width:'+mm(merkinPituusX)+'"></div>');});
+      }
+    }
+    if(a===0&&TILA.ruler&&g.reunusY>=6.5&&g.paperi.w>=110){
+      let tikut=""; for(let k=10;k<100;k+=10) tikut+='<i style="left:'+mm(k)+'"></i>';
+      arkki.insertAdjacentHTML("beforeend",'<div class="ruler" style="left:'+mm((g.paperi.w-100)/2)+';bottom:'+mm(Math.max(.5,(g.reunusY-5)/2))+';width:100mm">'+tikut+'<b>100 mm — measure me</b></div>');
+    }
+    const kaari=document.createElement("div"); kaari.className="sheetwrap";
+    kaari.appendChild(arkki); kontti.appendChild(kaari);
+  }
+  sovitaNakymaan();
+  paivitaValimuistiTilasto();
+}
+async function paivitaValimuistiTilasto(){
+  const n=await laskeValimuistista("kuvat");
+  $("sCache").textContent="cache "+n+" image"+(n===1?"":"s");
+}
+
+// Vie hiiren korttilistan rivin päälle -> korostetaan just ne ruudut arkilta
+// jotka on samaa korttia. Toimii myös toisin päin.
+function korostaKortti(eid){
+  for(const kaari of $("sheets").children){
+    const arkki=kaari.firstElementChild;
+    if(!arkki||!arkki.classList.contains("sheet")) continue;
+    arkki.classList.toggle("dim",!!eid);
+    arkki.querySelectorAll(".slot").forEach(function(s){ s.classList.toggle("hl",!!eid&&s.dataset.eid===eid); });
+  }
+  $("cardList").querySelectorAll(".item").forEach(function(r){ r.classList.toggle("hl",!!eid&&r.dataset.eid===eid); });
+}
+
+// Arkki pysyy DOM:issa aina oikean kokoisena millimetreinä — vaan CSS-
+// transform pienentää sen näytölle. Tulostettaessa transform nollataan,
+// joten se mitä näet ruudulla ei voi valehdella siitä mitä tulostuu.
+const PIKSELIA_PER_MM=96/25.4;
+function sovitaNakymaan(){
+  const kontti=$("sheets");
+  if(!kontti.children.length){ $("sZoom").textContent="—"; return; }
+  const g=laskeMitat(), matto=document.querySelector(".mat"), tyylit=getComputedStyle(matto);
+  const kaytettavissa=Math.max(120,matto.clientWidth-parseFloat(tyylit.paddingLeft)-parseFloat(tyylit.paddingRight));
+  const leveysPx=g.paperi.w*PIKSELIA_PER_MM, korkeusPx=g.paperi.h*PIKSELIA_PER_MM;
+  const valinta=$("zoom").value;
+  const kerroin=(valinta==="fit")?Math.min(1,kaytettavissa/leveysPx):parseFloat(valinta);
+  for(const kaari of kontti.children){
+    kaari.style.width=(leveysPx*kerroin)+"px";
+    kaari.style.height=(korkeusPx*kerroin)+"px";
+    kaari.firstElementChild.style.transform="scale("+kerroin+")";
+  }
+  $("sZoom").textContent=Math.round(kerroin*100)+"%";
+}
+let _sovitusAjastin=null;
+window.addEventListener("resize",function(){
+  clearTimeout(_sovitusAjastin); _sovitusAjastin=setTimeout(sovitaNakymaan,80);
+});
+
+/* =========================================================================
+   § 9  PDF:N RAKENNUS — käsin kirjoitettu, ei ulkoisia kirjastoja.
+
+   TARKKUUSSÄÄNTÖ: lähdekuvaa ei ikinä skaalata. Kanvas asetetaan kuvan
+   OMAAN pikselikokoon ja piirretään 1:1, imageSmoothing pois päältä.
+   Kaikki skaalaus jätetään tulostimen omalle RIP:lle, joka tekee sen
+   paremmin ja vaan kerran. Aiemmin täällä oli "PDF DPI" -asetus joka
+   olis voinu suurentaa 745px-kuvan isommaks — se poistettiin kokonaan,
+   koska se teki vaan isomman ja sumeamman tiedoston, ei yhtään enempää
+   yksityiskohtaa.
+
+   JPEG-data upotetaan sellaisenaan /DCTDecode-suotimella. PNG upotetaan
+   /FlateDecode + PNG-prediktorilla, häviöttömästi — isompi tiedosto mutta
+   pienikin teksti pysyy terävänä.
+   ========================================================================= */
+const PISTETTA_PER_MM=72/25.4, tekstikoodain=new TextEncoder();
+const siistiPdfMerkkijono=s=>String(s).replace(/[^\x20-\x7E]/g,"?").replace(/([\\()])/g,"\\$1");
+
+/** Piirtää kortin kanvasille sen OMASSA resoluutiossa. Ei skaalausta, ikinä. */
+function koodaaKortti(kuva,moodi){
+  const leveys=kuva.naturalWidth||kuva.width, korkeus=kuva.naturalHeight||kuva.height;
+  const kanvas=document.createElement("canvas");
+  kanvas.width=leveys; kanvas.height=korkeus;
+  const ctx=kanvas.getContext("2d",{alpha:false});
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,leveys,korkeus);
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(kuva,0,0);                       // 1:1 — ei skaalausta eikä pehmennystä
+  if(moodi==="png"){
+    const pikselit=ctx.getImageData(0,0,leveys,korkeus).data;
+    return Promise.resolve({data:pakkaaRGB(pikselit,leveys,korkeus),leveys:leveys,korkeus:korkeus,onPng:true});
+  }
+  return new Promise(function(ok,eiOk){
+    kanvas.toBlob(function(blobi){
+      if(!blobi) return eiOk(new Error("pakkaus epäonnistu"));
+      blobi.arrayBuffer().then(a=>ok({data:new Uint8Array(a),leveys:leveys,korkeus:korkeus,onPng:false}),eiOk);
+    },"image/jpeg",0.95);
+  });
+}
+
+/* Deflate (tallennetut lohkot) + zlib-kääre + PNG-prediktori 0 joka rivillä.
+   Tallennetut lohkot tarkottaa ettei tarvi rakentaa pakkaustauluja itte —
+   tiedosto on iso mutta täysin häviötön. */
+function adler32summa(tavut){
+  let a=1,s=0;
+  for(let i=0;i<tavut.length;i++){ a=(a+tavut[i])%65521; s=(s+a)%65521; }
+  return((s<<16)|a)>>>0;
+}
+function pakkaaRGB(rgbaData,leveys,korkeus){
+  const raakadata=new Uint8Array(korkeus*(1+leveys*3));
+  let kohta=0;
+  for(let y=0;y<korkeus;y++){
+    raakadata[kohta++]=0; // suodintyyppi 0 (ei suodinta)
+    let i=(y*leveys)<<2;
+    for(let x=0;x<leveys;x++){
+      raakadata[kohta++]=rgbaData[i]; raakadata[kohta++]=rgbaData[i+1]; raakadata[kohta++]=rgbaData[i+2];
+      i+=4;
+    }
+  }
+  const LOHKON_MAKSIMI=65535, lohkojenMaara=Math.ceil(raakadata.length/LOHKON_MAKSIMI)||1;
+  const ulos=new Uint8Array(2+raakadata.length+lohkojenMaara*5+4);
+  let p=0; ulos[p++]=0x78; ulos[p++]=0x01;  // zlib-otsikko
+  for(let i=0;i<lohkojenMaara;i++){
+    const alku=i*LOHKON_MAKSIMI, pituus=Math.min(LOHKON_MAKSIMI,raakadata.length-alku), vika=(i===lohkojenMaara-1)?1:0;
+    ulos[p++]=vika; ulos[p++]=pituus&255; ulos[p++]=pituus>>8; ulos[p++]=(~pituus)&255; ulos[p++]=((~pituus)>>8)&255;
+    ulos.set(raakadata.subarray(alku,alku+pituus),p); p+=pituus;
+  }
+  const summa=adler32summa(raakadata);
+  ulos[p++]=(summa>>>24)&255; ulos[p++]=(summa>>>16)&255; ulos[p++]=(summa>>>8)&255; ulos[p++]=summa&255;
+  return ulos.subarray(0,p);
+}
+
+// Rakentaa koko PDF-tiedoston tavu tavulta. Ei mitään kirjastoa, ihan
+// perus PDF 1.4 -objektimallia: sivut, fontti, kuvat, xref-taulukko lopussa.
+function rakennaPdfTiedosto(sivujenSisalto,mitat,kuvat){
+  const palat=[]; let pituus=0;
+  const lisaa=function(d){ const t=(typeof d==="string")?tekstikoodain.encode(d):d; palat.push(t); pituus+=t.length; };
+  const sijainnit=[];
+  const KUVIA=kuvat.length, FONTTI_OBJ=3, KUVA0_OBJ=4, SISALTO0_OBJ=KUVA0_OBJ+KUVIA;
+  const sisaltoObj=s=>SISALTO0_OBJ+2*s, sivuObj=s=>SISALTO0_OBJ+2*s+1;
+  const sivujaYhteensa=sivujenSisalto.length, viimeinenObj=SISALTO0_OBJ+2*sivujaYhteensa-1;
+
+  const kirjoitaObjekti=function(n,sisalto){ sijainnit[n]=pituus; lisaa(n+" 0 obj\n"+sisalto+"\nendobj\n"); };
+  const kirjoitaVirta=function(n,sanakirja,tavut){
+    sijainnit[n]=pituus;
+    lisaa(n+" 0 obj\n<<"+sanakirja+"/Length "+tavut.length+">>\nstream\n"); lisaa(tavut); lisaa("\nendstream\nendobj\n");
+  };
+
+  lisaa("%PDF-1.4\n"); lisaa(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+  kirjoitaObjekti(1,"<</Type/Catalog/Pages 2 0 R>>");
+  const lapset=[]; for(let s=0;s<sivujaYhteensa;s++) lapset.push(sivuObj(s)+" 0 R");
+  kirjoitaObjekti(2,"<</Type/Pages/Count "+sivujaYhteensa+"/Kids["+lapset.join(" ")+"]>>");
+  kirjoitaObjekti(FONTTI_OBJ,"<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>");
+
+  for(let i=0;i<KUVIA;i++){
+    const kuva=kuvat[i];
+    const suodin=kuva.onPng
+      ? "/Filter/FlateDecode/DecodeParms<</Predictor 15/Colors 3/BitsPerComponent 8/Columns "+kuva.leveys+">>"
+      : "/Filter/DCTDecode";
+    kirjoitaVirta(KUVA0_OBJ+i,"/Type/XObject/Subtype/Image/Width "+kuva.leveys+"/Height "+kuva.korkeus+
+      "/ColorSpace/DeviceRGB/BitsPerComponent 8"+suodin,kuva.data);
+  }
+  let kuvaViitteet=""; for(let i=0;i<KUVIA;i++) kuvaViitteet+="/I"+i+" "+(KUVA0_OBJ+i)+" 0 R";
+  const resurssitKuville=KUVIA?("/XObject<<"+kuvaViitteet+">>"):"";
+  const leveysPt=(mitat.paperi.w*PISTETTA_PER_MM).toFixed(4), korkeusPt=(mitat.paperi.h*PISTETTA_PER_MM).toFixed(4);
+
+  for(let s=0;s<sivujaYhteensa;s++){
+    kirjoitaVirta(sisaltoObj(s),"",tekstikoodain.encode(sivujenSisalto[s]));
+    kirjoitaObjekti(sivuObj(s),"<</Type/Page/Parent 2 0 R/MediaBox[0 0 "+leveysPt+" "+korkeusPt+"]"+
+      "/Resources<</Font<</F1 "+FONTTI_OBJ+" 0 R>>"+resurssitKuville+">>/Contents "+sisaltoObj(s)+" 0 R>>");
+  }
+
+  const xrefKohta=pituus;
+  lisaa("xref\n0 "+(viimeinenObj+1)+"\n0000000000 65535 f \n");
+  for(let i=1;i<=viimeinenObj;i++) lisaa(String(sijainnit[i]||0).padStart(10,"0")+" 00000 n \n");
+  lisaa("trailer\n<</Size "+(viimeinenObj+1)+"/Root 1 0 R>>\nstartxref\n"+xrefKohta+"\n%%EOF\n");
+  return new Blob(palat,{type:"application/pdf"});
+}
+
+async function viePdfTiedostoksi(){
+  lueLomakkeenArvot();
+  const g=laskeMitat(), yksikot=litistaYksikoiksi();
+  if(!yksikot.length){ naytaTilaviesti("Nothing to export — import a list first.","err"); return; }
+  const arkkienMaara=Math.ceil(yksikot.length/g.perArkki);
+  const nappi=$("btnPdf"); nappi.disabled=true;
+
+  // ESITARKISTUS: varmistetaan MPC-kuvien PDF-kelpoisuus ENNEN kuin mitään
+  // aletaan koodaamaan, jotta varoitus ehtii näkyviin eikä tule yllätyksenä.
+  const mpcUrlitKoetettavaksi=[...new Set(
+    yksikot.filter(y=>!y.puuttuu&&y.url.indexOf("drive.google.com")>-1).map(y=>y.url)
+  )];
+  if(mpcUrlitKoetettavaksi.length){
+    nappi.textContent="Checking MPCFill images…";
+    await Promise.all(mpcUrlitKoetettavaksi.map(koettelePdfLuettavuus));
+    const estettyja=yksikot.filter(y=>!y.puuttuu&&mpcLuettavuus.get(y.url)===false).length;
+    if(estettyja){
+      naytaTilaviesti(estettyja+" MPCFill image(s) are blocked from PDF embedding by Google Drive — they will print as named outlines. Use the Art button to pick different art for those cards.","err");
+      piirraKorttilista();               // rivimerkit ajan tasalle ennen vientiä
+    }
+  }
+
+  // Sama kuva voi esiintyä monta kertaa (4 kpl samaa korttia) — koodataan
+  // se vaan kerran ja viitataan siihen useasti, säästää sekä aikaa että tilaa.
+  const nahdytUrlit=new Set(), urlit=[];
+  yksikot.forEach(function(y){ if(!y.puuttuu&&!nahdytUrlit.has(y.url)){ nahdytUrlit.add(y.url); urlit.push(y.url); } });
+  const kuvat=[], hakemisto=new Map();
+  let epaonnistui=0, pieninDpi=Infinity;
+
+  for(let i=0;i<urlit.length;i++){
+    nappi.textContent="Encoding "+(i+1)+"/"+urlit.length;
+    asetaEdistyminen((i+1)/urlit.length);
+    const kuva=await haeBittikartta(urlit[i]);
+    if(!kuva){ epaonnistui++; continue; }
+    try{
+      const koodattu=await koodaaKortti(kuva,TILA.enc);
+      pieninDpi=Math.min(pieninDpi,koodattu.leveys/(TILA.cardW/25.4));
+      hakemisto.set(urlit[i],kuvat.length);
+      kuvat.push(koodattu);
+    }catch(e){ epaonnistui++; }
+  }
+
+  const sivujenSisalto=[], ylareuna=g.paperi.h;
+  for(let a=0;a<arkkienMaara;a++){
+    let piirtokomennot="";
+    for(let i=0;i<g.perArkki;i++){
+      const yks=yksikot[a*g.perArkki+i]; if(!yks) break;
+      const s=i%g.sarakkeet, r=Math.floor(i/g.sarakkeet);
+      const xmm=g.reunusX+s*(g.kw+g.valiT), ymm=g.reunusY+r*(g.kh+g.valiT);
+      const x=(xmm*PISTETTA_PER_MM).toFixed(4), y=((ylareuna-ymm-g.kh)*PISTETTA_PER_MM).toFixed(4);
+      const leveys=(g.kw*PISTETTA_PER_MM).toFixed(4), korkeus=(g.kh*PISTETTA_PER_MM).toFixed(4);
+      const kuvaId=yks.puuttuu?undefined:hakemisto.get(yks.url);
+      if(kuvaId!==undefined){
+        piirtokomennot+="q "+leveys+" 0 0 "+korkeus+" "+x+" "+y+" cm /I"+kuvaId+" Do Q\n";
+      }else{
+        // Kuva puuttuu -> piirretään harmaa laatikko + kortin nimi tekstinä,
+        // ettei arkki jää yhtä ruutua vajaaksi eikä tuloste mene sekaisin.
+        piirtokomennot+="q 0.6 G 0.6 w "+x+" "+y+" "+leveys+" "+korkeus+" re S Q\n";
+        piirtokomennot+="BT /F1 9 Tf 0 g 1 0 0 1 "+((xmm+4)*PISTETTA_PER_MM).toFixed(2)+" "+((ylareuna-ymm-g.kh/2)*PISTETTA_PER_MM).toFixed(2)+
+             " Tm ("+siistiPdfMerkkijono(yks.nimi.slice(0,34))+") Tj ET\n";
+      }
+    }
+    if(TILA.guides!=="none"){
+      const koord=leikkausviivojenKoordinaatit(g);
+      piirtokomennot+="q 0 G 0.4 w\n";
+      if(TILA.guides==="lines"){
+        koord.xt.forEach(function(v){ const X=(v*PISTETTA_PER_MM).toFixed(3); piirtokomennot+=X+" 0 m "+X+" "+(g.paperi.h*PISTETTA_PER_MM).toFixed(3)+" l S\n"; });
+        koord.yt.forEach(function(v){ const Y=((ylareuna-v)*PISTETTA_PER_MM).toFixed(3); piirtokomennot+="0 "+Y+" m "+(g.paperi.w*PISTETTA_PER_MM).toFixed(3)+" "+Y+" l S\n"; });
+      }else{
+        const merkinPituusY=Math.max(1.5,Math.min(4,g.reunusY-1.5)), merkinPituusX=Math.max(1.5,Math.min(4,g.reunusX-1.5));
+        koord.xt.forEach(function(v){ const X=(v*PISTETTA_PER_MM).toFixed(3);
+          piirtokomennot+=X+" "+((ylareuna-g.reunusY+1)*PISTETTA_PER_MM).toFixed(3)+" m "+X+" "+((ylareuna-g.reunusY+1+merkinPituusY)*PISTETTA_PER_MM).toFixed(3)+" l S\n";
+          piirtokomennot+=X+" "+((ylareuna-g.reunusY-g.ruudukonKorkeus-1)*PISTETTA_PER_MM).toFixed(3)+" m "+X+" "+((ylareuna-g.reunusY-g.ruudukonKorkeus-1-merkinPituusY)*PISTETTA_PER_MM).toFixed(3)+" l S\n"; });
+        koord.yt.forEach(function(v){ const Y=((ylareuna-v)*PISTETTA_PER_MM).toFixed(3);
+          piirtokomennot+=((g.reunusX-1)*PISTETTA_PER_MM).toFixed(3)+" "+Y+" m "+((g.reunusX-1-merkinPituusX)*PISTETTA_PER_MM).toFixed(3)+" "+Y+" l S\n";
+          piirtokomennot+=((g.reunusX+g.ruudukonLeveys+1)*PISTETTA_PER_MM).toFixed(3)+" "+Y+" m "+((g.reunusX+g.ruudukonLeveys+1+merkinPituusX)*PISTETTA_PER_MM).toFixed(3)+" "+Y+" l S\n"; });
+      }
+      piirtokomennot+="Q\n";
+    }
+    if(a===0&&TILA.ruler&&g.reunusY>=6.5&&g.paperi.w>=110){
+      const x0=(g.paperi.w-100)/2, y0=Math.max(.5,(g.reunusY-5)/2), Y=(y0*PISTETTA_PER_MM).toFixed(3);
+      piirtokomennot+="q 0 G 0.4 w\n"+(x0*PISTETTA_PER_MM).toFixed(3)+" "+Y+" m "+((x0+100)*PISTETTA_PER_MM).toFixed(3)+" "+Y+" l S\n";
+      for(let k=0;k<=100;k+=10){ const X=((x0+k)*PISTETTA_PER_MM).toFixed(3);
+        piirtokomennot+=X+" "+Y+" m "+X+" "+((y0+(k%50?1.5:3))*PISTETTA_PER_MM).toFixed(3)+" l S\n"; }
+      piirtokomennot+="Q\nBT /F1 6 Tf 0 g 1 0 0 1 "+((x0+33)*PISTETTA_PER_MM).toFixed(2)+" "+((y0+3.6)*PISTETTA_PER_MM).toFixed(2)+" Tm (100 mm - measure me) Tj ET\n";
+    }
+    sivujenSisalto.push(piirtokomennot);
+  }
+
+  const pdfData=rakennaPdfTiedosto(sivujenSisalto,g,kuvat);
+  const linkki=document.createElement("a");
+  linkki.href=URL.createObjectURL(pdfData);
+  linkki.download="proxies-"+TILA.paper.toLowerCase()+"-"+arkkienMaara+"p.pdf";
+  document.body.appendChild(linkki); linkki.click(); linkki.remove();
+  setTimeout(function(){ URL.revokeObjectURL(linkki.href); },20000);
+  nappi.disabled=false; nappi.textContent="Export PDF";
+
+  const dpiTeksti=isFinite(pieninDpi)?(" · lowest card "+Math.round(pieninDpi)+" dpi"):"";
+  naytaTilaviesti(
+    epaonnistui
+      ? ("PDF ready — "+epaonnistui+" image(s) unreadable, printed as outlines. Serving over http://localhost usually fixes it.")
+      : ("PDF ready · "+arkkienMaara+" sheet"+(arkkienMaara===1?"":"s")+" · "+(pdfData.size/1048576).toFixed(1)+" MB"+dpiTeksti),
+    epaonnistui?"err":"good"
+  );
+  asetaEdistyminen(1);
+}
+
+/* =========================================================================
+   § 7  TOIMINNOT — napinpainallusten takana olevat funktiot
+   ========================================================================= */
+function naytaVerkkoOhje(nayta){
+  $("netHelp").innerHTML = nayta ? '<div class="callout bad" style="margin-top:10px">'+
+    '<b>The browser could not reach Scryfall.</b> Opening <code>index.html</code> straight from disk gives the page a <code>null</code> origin, which some browsers and networks refuse for cross-site requests. '+
+    'Open a terminal in this folder and run <code>python -m http.server 8000</code>, then use <code>http://localhost:8000</code>. '+
+    'Also check that no VPN, ad blocker, or firewall is blocking <code>api.scryfall.com</code>.</div>' : "";
+}
+
+async function tuoDekki(){
+  lueLomakkeenArvot();
+  const kortit=jasennaDekkilista($("deckIn").value);
+  if(!kortit.length){ naytaTilaviesti("Nothing to import. Add a line like “4 Lightning Bolt”.","err"); return; }
+  TILA.kortit=kortit; piirraKorttilista(); naytaVerkkoOhje(false);
+  $("btnImport").disabled=true;
+  naytaTilaviesti("Checking connection to Scryfall…"); asetaEdistyminen(.02);
+  erahakuToimii=true;
+
+  const netissa=await tarkistaYhteys();
+  if(!netissa){
+    const valimuistissaOlevat=await laskeValimuistista("kortit");
+    if(!valimuistissaOlevat){
+      $("btnImport").disabled=false;
+      naytaTilaviesti("Can't reach api.scryfall.com.","err"); naytaVerkkoOhje(true); asetaEdistyminen(0); return;
+    }
+    naytaTilaviesti("Offline — using cached cards only.","err"); naytaVerkkoOhje(true);
+  }
+
+  naytaTilaviesti("Resolving "+kortit.length+" cards…");
+  try{
+    await ratkaiseKortit(kortit,function(valmiit,yhteensa){
+      asetaEdistyminen(valmiit/yhteensa);
+      naytaTilaviesti("Resolving "+valmiit+" / "+yhteensa+"…");
+    });
+  }catch(virhe){ naytaTilaviesti("Lookup failed: "+virhe.message,"err"); }
+  $("btnImport").disabled=false;
+
+  const puuttuvienMaara=kortit.filter(k=>k.tila==="puuttuu").length;
+  const arvattujenMaara=kortit.filter(k=>k.lahde==="fuzzy"||k.lahde==="haku").length;
+  const huonolaatuistenMaara=kortit.filter(k=>onHuonolaatuinen(k.data)).length;
+
+  if(puuttuvienMaara===kortit.length){
+    naytaTilaviesti("No cards resolved. See below.","err"); naytaVerkkoOhje(true);
+  }else{
+    naytaTilaviesti(
+      puuttuvienMaara?(puuttuvienMaara+" card(s) had no image — they print as named placeholders.")
+      :huonolaatuistenMaara?("Done. "+huonolaatuistenMaara+" printing(s) only exist as low-res scans — use Art to find a sharper one.")
+      :arvattujenMaara?("Done. "+arvattujenMaara+" name(s) matched approximately — check flagged rows.")
+      :"Done. All cards resolved.",
+      puuttuvienMaara?"err":(huonolaatuistenMaara?null:"good")
+    );
+  }
+  asetaEdistyminen(1); piirraKorttilista(); await piirraArkit();
+  // Välimuistista voi palata aiemmin valittuja MPC-kuvia — koetetaan niiden
+  // PDF-kelpoisuus taustalla (tulokset päivittyy riveille kun valmistuu).
+  tarkistaMpcLuettavuudet();
+  // Ja virkistetään välimuistista tulleiden korttien hinnat, jos tämän
+  // päivän hetkikuva puuttuu — trendit karttuu tästä itsestään.
+  paivitaVanhentuneetHinnat();
+}
+
+async function yritaUudelleenPuuttuvat(){
+  const puuttuvat=TILA.kortit.filter(k=>k.tila==="puuttuu");
+  if(!puuttuvat.length){ naytaTilaviesti("No missing cards to retry."); return; }
+  erahakuToimii=true; naytaTilaviesti("Retrying "+puuttuvat.length+"…");
+  puuttuvat.forEach(function(k){ k.tila="odottaa"; });
+  await ratkaiseKortit(puuttuvat,function(valmiit,yhteensa){ asetaEdistyminen(valmiit/yhteensa); });
+  const jaljellaOlevat=TILA.kortit.filter(k=>k.tila==="puuttuu").length;
+  naytaTilaviesti(jaljellaOlevat?("Still missing "+jaljellaOlevat+"."):"All resolved.",jaljellaOlevat?"err":"good");
+  piirraKorttilista(); await piirraArkit();
+}
+
+let valintaKohde=null;
+async function avaaKuvanValitsin(kortti){
+  valintaKohde=kortti;
+  $("pickTitle").textContent="Printings of "+(kortti.data?kortti.data.name:kortti.nimi);
+  $("pickBody").innerHTML='<div class="empty">Loading printings from Scryfall and MPCFill…</div>';
+  $("veil").classList.add("on");
+  const haettavaNimi=(kortti.data?kortti.data.name:kortti.nimi).replace(/"/g,"");
+
+  // Molemmat lähteet rinnakkain — kumpikaan ei jää odottamaan toista,
+  // ja toisen kaatuminen ei estä toisen tuloksia näkymästä.
+  const [scryfallLupaus,mpcLupaus]=await Promise.allSettled([
+    kutsuRajapintaa("/cards/search?unique=prints&order=released&dir=desc&q="+encodeURIComponent('!"'+haettavaNimi+'" include:extras')),
+    haeMpcVaihtoehdot(haettavaNimi)
+  ]);
+  const painokset=(scryfallLupaus.status==="fulfilled"&&scryfallLupaus.value&&scryfallLupaus.value.data)?scryfallLupaus.value.data:[];
+  const mpcLista=(mpcLupaus.status==="fulfilled")?mpcLupaus.value:[];
+
+  if(!painokset.length&&!mpcLista.length){
+    $("pickBody").innerHTML='<div class="empty">No printings found from either source.</div>'; return;
+  }
+
+  // Terävät skannaukset ensin — tää on se korjaus sumeaan korttiin.
+  painokset.sort(function(a,b){ return (onHuonolaatuinen(a)?1:0)-(onHuonolaatuinen(b)?1:0); });
+  // MPC-renderöinnit dpi-järjestykseen, paras ensin
+  mpcLista.sort(function(a,b){ return (b.dpi||0)-(a.dpi||0); });
+
+  let html="";
+  html+=painokset.map(function(p,i){
+    const kuvaUrl=(kortinPuolet(p,"normal",false)[0]||{}).url||"";
+    const huono=onHuonolaatuinen(p);
+    return '<button class="pick" data-lahde="scry" data-i="'+i+'">'+
+      (kuvaUrl?'<img src="'+kuvaUrl+'" alt="" loading="lazy">':'<div class="s">no image</div>')+
+      '<div class="s'+(huono?" lo":"")+'">'+turvaaHtml((p.set_name||"")+" #"+(p.collector_number||"")+" · "+(p.artist||""))+
+      "<br>Scryfall · "+(huono?"low-res scan":"high-res scan")+'</div></button>';
+  }).join("");
+  html+=mpcLista.map(function(m,i){
+    const huono=(m.dpi||0)<600;
+    return '<button class="pick" data-lahde="mpc" data-i="'+i+'">'+
+      (m.pikkukuva?'<img src="'+m.pikkukuva+'" alt="" loading="lazy">':'<div class="s">no preview</div>')+
+      '<div class="s'+(huono?" lo":"")+'">'+turvaaHtml(m.lahdeNimi)+
+      "<br>MPCFill · "+(m.dpi?m.dpi+" dpi":"community render")+'</div></button>';
+  }).join("");
+  if(mpcLupaus.status!=="fulfilled"||(!mpcLista.length&&painokset.length)){
+    html+='<div class="empty" style="grid-column:1/-1">MPCFill returned nothing for this name — Scryfall results only.</div>';
+  }
+  $("pickBody").innerHTML=html;
+
+  $("pickBody").querySelectorAll(".pick").forEach(function(nappi){
+    nappi.onclick=async function(){
+      const i=+nappi.dataset.i;
+      const valittu=(nappi.dataset.lahde==="mpc")
+        ? mpcKortiksi(mpcLista[i],haettavaNimi)
+        : painokset[i];
+      valintaKohde.data=valittu; valintaKohde.tila="ok"; valintaKohde.lahde="valittu"; valintaKohde.kiinnitetty=true;
+      await tallennaKortti(muodostaAvain(valintaKohde),valittu);
+      $("veil").classList.remove("on"); piirraKorttilista(); piirraArkit();
+      // MPC-valinta: koetetaan heti pääseekö kuva PDF:ään. Rivillä näkyy
+      // "checking…" kunnes tulos selviää, sitten merkki päivittyy itsestään.
+      if(valittu._mpc) tarkistaMpcLuettavuudet();
+    };
+  });
+}
+
+async function odotaKuvienLatautumista(juuri){
+  const kuvat=[].slice.call(juuri.querySelectorAll("img"));
+  await Promise.all(kuvat.map(k=>(k.complete&&k.naturalWidth)?Promise.resolve():
+    new Promise(function(ok){
+      k.addEventListener("load",ok,{once:true}); k.addEventListener("error",ok,{once:true}); setTimeout(ok,15000);
+    })));
+}
+async function tulostaArkit(){
+  const kontti=$("sheets");
+  if(!kontti.children.length){ naytaTilaviesti("Nothing to print yet.","err"); return; }
+  const nappi=$("btnPrint"); nappi.disabled=true; nappi.textContent="Loading images…";
+  await odotaKuvienLatautumista(kontti);
+  nappi.disabled=false; nappi.textContent="Print from browser instead";
+  window.print();
+}
+
+function kasitteleTiedosto(tiedosto){
+  if(!tiedosto) return;
+  const lukija=new FileReader();
+  lukija.onload=function(tapahtuma){
+    $("deckIn").value=tapahtuma.target.result||"";
+    tallennaAsetukset();
+    naytaTilaviesti("Loaded "+tiedosto.name+". Press Import list when ready.");
+  };
+  lukija.onerror=function(){ naytaTilaviesti("Couldn't read that file.","err"); };
+  lukija.readAsText(tiedosto);
+}
+
+/* =========================================================================
+   § 8  NAPPULOIDEN JA TAPAHTUMIEN KYTKENTÄ
+   Kaikki addEventListenerit yhteen paikkaan, ettei niitä oo sirotellu
+   ympäri koodia — helpompi löytää mistä mikäkin nappi käynnistyy.
+   ========================================================================= */
+lataaAsetukset(); piirraKorttilista(); paivitaValimuistiTilasto();
+
+$("btnImport").onclick=tuoDekki;
+$("btnRetry").onclick=yritaUudelleenPuuttuvat;
+$("btnPdf").onclick=viePdfTiedostoksi;
+$("btnPrint").onclick=tulostaArkit;
+$("btnClear").onclick=function(){
+  $("deckIn").value=""; TILA.kortit=[]; listanSuodatin=""; $("filter").value="";
+  tallennaAsetukset(); piirraKorttilista(); piirraArkit();
+  naytaTilaviesti("Cleared."); asetaEdistyminen(0); naytaVerkkoOhje(false);
+};
+$("btnPurge").onclick=async function(){
+  await tyhjennaValimuisti("kuvat"); await tyhjennaValimuisti("kortit");
+  paivitaValimuistiTilasto(); naytaTilaviesti("Cache cleared.");
+};
+$("pickClose").onclick=function(){ $("veil").classList.remove("on"); };
+$("veil").onclick=function(e){ if(e.target===$("veil")) $("veil").classList.remove("on"); };
+
+["paper","quality","cardW","cardH","gap","margin","guides","ruler","dfc","cacheImgs","enc","hinta"]
+  .forEach(id=>$(id).addEventListener("change",piirraArkit));
+$("hinta").addEventListener("change",piirraKorttilista);   // rivihinnat vaihtuu heti
+$("zoom").addEventListener("change",sovitaNakymaan);
+$("deckIn").addEventListener("input",tallennaAsetukset);
+$("filter").addEventListener("input",function(e){ listanSuodatin=e.target.value; piirraKorttilista(); });
+$("chipMissing").addEventListener("click",function(){ naytaVainPuuttuvat=!naytaVainPuuttuvat; piirraKorttilista(); });
+
+/* korttihaku: debounce + vanhentuneiden vastausten hylkäys */
+$("hakuKentta").addEventListener("input",function(e){
+  const hakusana=e.target.value;
+  clearTimeout(hakuAjastin);
+  if(hakusana.trim().length<2){ suljeEhdotukset(); $("hakuKotelo").classList.remove("lataa"); return; }
+  hakuAjastin=setTimeout(async function(){
+    const oma=++hakuJuokseva;                     // juokseva numero: vain uusin vastaus saa piirtää
+    $("hakuKotelo").classList.add("lataa");
+    let nimet=[];
+    try{ nimet=await haeEhdotukset(hakusana); }
+    catch(err){
+      if(oma!==hakuJuokseva) return;
+      $("hakuKotelo").classList.remove("lataa");
+      $("ehdotukset").innerHTML='<div class="tyhja">Can\'t reach Scryfall. Type the full name and press Enter — cached cards still work.</div>';
+      $("ehdotukset").classList.add("on"); hakuNimet=[]; hakuValittu=-1; return;
+    }
+    if(oma!==hakuJuokseva) return;                 // ehdittiin kirjoittaa lisää, hylätään tämä
+    $("hakuKotelo").classList.remove("lataa");
+    piirraEhdotukset(nimet,hakusana);
+  },180);
+});
+$("hakuKentta").addEventListener("keydown",function(e){
+  if(e.key==="ArrowDown"){ e.preventDefault(); siirraValintaa(1); return; }
+  if(e.key==="ArrowUp"){ e.preventDefault(); siirraValintaa(-1); return; }
+  if(e.key==="Escape"){ suljeEhdotukset(); return; }
+  if(e.key==="Enter"){
+    e.preventDefault();
+    // Valittu ehdotus, muuten eka ehdotus, muuten kirjoitettu teksti sellaisenaan
+    // (fuzzy-haku tikapuissa korjaa kirjoitusvirheet).
+    const nimi=(hakuValittu>=0&&hakuNimet[hakuValittu])||hakuNimet[0]||e.target.value.trim();
+    if(nimi) valitseEhdotus(nimi);
+  }
+});
+$("ehdotukset").addEventListener("click",function(e){
+  const rivi=e.target.closest("[data-nimi]");
+  if(rivi) valitseEhdotus(rivi.dataset.nimi);
+});
+$("ehdotukset").addEventListener("mousemove",function(e){
+  const rivi=e.target.closest("[data-nimi]");
+  if(!rivi) return;
+  hakuValittu=+rivi.dataset.i;                     // hiiri ja näppäimistö pitää saman korostuksen
+  $("ehdotukset").querySelectorAll(".ehdotus").forEach(function(r,i){
+    r.classList.toggle("valittu",i===hakuValittu);
+  });
+});
+document.addEventListener("click",function(e){
+  if(!e.target.closest("#hakuKotelo")) suljeEhdotukset();
+});
+
+$("btnBrowse").addEventListener("click",function(){ $("fileInput").click(); });
+$("fileInput").addEventListener("change",function(e){
+  const tiedosto=e.target.files&&e.target.files[0];
+  if(tiedosto) kasitteleTiedosto(tiedosto);
+  e.target.value="";               // sama tiedosto voi valita uudelleen peräkkäin
+});
+
+// Deck-tiedoston (.txt) raahaus suoraan tekstikentän päälle
+const dekkikentta=$("deckIn");
+["dragenter","dragover"].forEach(t=>dekkikentta.addEventListener(t,function(e){ e.preventDefault(); dekkikentta.classList.add("over"); }));
+["dragleave","drop"].forEach(t=>dekkikentta.addEventListener(t,function(e){ e.preventDefault(); dekkikentta.classList.remove("over"); }));
+dekkikentta.addEventListener("drop",function(e){
+  const tiedosto=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+  if(tiedosto){ e.stopPropagation(); kasitteleTiedosto(tiedosto); }
+});
+
+$("cardList").addEventListener("input",function(e){ if(e.target.dataset.maara) sovitaMaaraKentanLeveys(e.target); });
+$("cardList").addEventListener("change",function(e){
+  const id=e.target.dataset.maara; if(!id) return;
+  const kortti=TILA.kortit.find(k=>k.id===id); if(!kortti) return;
+  kortti.maara=Math.max(0,parseInt(e.target.value,10)||0);
+  sovitaMaaraKentanLeveys(e.target); piirraArkit();
+});
+
+// +1 / -1 nappien apuri: päivitetään lukumääräkenttä PAIKALLAAN eikä
+// piirretä koko listaa uusiks — muuten pomppuanimaatio kuolis heti alkuunsa.
+function askellaMaaraa(id,muutos){
+  const kortti=TILA.kortit.find(k=>k.id===id); if(!kortti) return;
+  kortti.maara=Math.max(0,kortti.maara+muutos);
+  const kentta=$("cardList").querySelector('.qty[data-maara="'+CSS.escape(id)+'"]');
+  if(kentta){
+    kentta.value=kortti.maara;
+    sovitaMaaraKentanLeveys(kentta);
+    kentta.classList.remove("pomppu");
+    void kentta.offsetWidth;               // pakotettu reflow -> animaatio käynnistyy uudelleen joka klikillä
+    kentta.classList.add("pomppu");
+  }
+  piirraArkit();
+}
+$("cardList").addEventListener("click",function(e){
+  const plusNappi=e.target.closest("[data-plus]"), miinusNappi=e.target.closest("[data-miinus]");
+  if(plusNappi){ askellaMaaraa(plusNappi.dataset.plus,+1); return; }
+  if(miinusNappi){ askellaMaaraa(miinusNappi.dataset.miinus,-1); return; }
+  const tokenNappi=e.target.closest("[data-tokenit]");
+  if(tokenNappi){
+    const kortti=TILA.kortit.find(k=>k.id===tokenNappi.dataset.tokenit);
+    if(kortti) lisaaTokenit(kortti);
+    return;
+  }
+  const taideNappi=e.target.closest("[data-taide]"), poistaNappi=e.target.closest("[data-poista]");
+  if(taideNappi){ const kortti=TILA.kortit.find(k=>k.id===taideNappi.dataset.taide); if(kortti) avaaKuvanValitsin(kortti); }
+  if(poistaNappi){ TILA.kortit=TILA.kortit.filter(k=>k.id!==poistaNappi.dataset.poista); piirraKorttilista(); piirraArkit(); }
+});
+
+// Hover-korostus vaan hiirikäyttäjille, ettei sekoita kosketusnäytön scrollausta
+if(window.matchMedia("(hover:hover)").matches){
+  $("cardList").addEventListener("mouseover",function(e){ const r=e.target.closest(".item"); if(r) korostaKortti(r.dataset.eid); });
+  $("cardList").addEventListener("mouseleave",function(){ korostaKortti(null); });
+  $("sheets").addEventListener("mouseover",function(e){ const s=e.target.closest(".slot"); if(s&&s.dataset.eid) korostaKortti(s.dataset.eid); });
+  $("sheets").addEventListener("mouseleave",function(){ korostaKortti(null); });
+}
+
+// Ctrl/Cmd+Enter tuo listan, Ctrl/Cmd+P rakentaa PDF:n eikä avaa selaimen
+// omaa tulostusdialogia — se kun mielellään venyttäis arkin väärän kokoiseks.
+document.addEventListener("keydown",function(e){
+  // Escape sulkee ensin auki olevat ehdotukset, vasta sitten modaalin
+  if(e.key==="Escape"){
+    if($("ehdotukset").classList.contains("on")) suljeEhdotukset();
+    else $("veil").classList.remove("on");
+  }
+  const muokkausnappiPohjassa=e.ctrlKey||e.metaKey;
+  if(muokkausnappiPohjassa&&e.key==="Enter"){ e.preventDefault(); tuoDekki(); }
+  if(muokkausnappiPohjassa&&(e.key==="p"||e.key==="P")){ e.preventDefault(); viePdfTiedostoksi(); }
+});
+
+/* --- Mobiilin välilehdet -----------------------------------------------
+   Kapealla näytöllä paneeli ja esikatselu on omat välilehtensä — kukaan
+   ei jaksa rullata koko asetuslistaa läpi joka kerta nähdäkseen arkit.
+   Työpöydällä data-nakyma-attribuutti on olemassa mutta CSS ei reagoi
+   siihen (säännöt on media queryn sisällä), joten desktop ei muutu.
+   TÄRKEE: piilotetun esikatselun leveys on 0, joten sovitus pitää laskea
+   uusiks vasta kun välilehti on oikeasti näkyvissä — siksi rAF. */
+function vaihdaNakyma(nakyma){
+  document.body.dataset.nakyma=nakyma;
+  $("mtabDeck").setAttribute("aria-selected",String(nakyma==="deck"));
+  $("mtabPreview").setAttribute("aria-selected",String(nakyma==="preview"));
+  window.scrollTo(0,0);
+  if(nakyma==="preview") requestAnimationFrame(sovitaNakymaan);
+}
+$("mtabDeck").onclick=function(){ vaihdaNakyma("deck"); };
+$("mtabPreview").onclick=function(){ vaihdaNakyma("preview"); };
+$("mtabPdf").onclick=async function(){
+  // Jos listaa ei ole, hypätään deck-näkymään jotta virheviesti oikeasti näkyy
+  if(!TILA.kortit.length){ vaihdaNakyma("deck"); naytaTilaviesti("Nothing to export — import a list first.","err"); return; }
+  const teksti=this.querySelector("span"), alkuperainen=teksti.textContent;
+  teksti.textContent="…";                      // palaute näkyy vaikka paneeli olis piilossa
+  try{ await viePdfTiedostoksi(); }
+  finally{ teksti.textContent=alkuperainen; }
+};
+document.body.dataset.nakyma="deck";
+
+piirraArkit(); // ensimmäinen piirto heti kun sivu on latautunut
+</script>
+</body>
+</html>
