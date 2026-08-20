@@ -22,15 +22,15 @@ Turn any Magic: The Gathering deck list — typed, pasted, dropped, or **scanned
 ### Card Import
 
 <img width="700" alt="indexhtml1" src="https://github.com/user-attachments/assets/6e7c8d23-f49b-4387-b547-569e2f73aff6" />
-
+---
 ### Manual Search & Card Rules 
 
 <img width="700" alt="indexhtml1" src="https://github.com/user-attachments/assets/f2e82075-3dea-461c-9fb0-9ccfc8cb9f92" />
-
+---
 ### Card Art Selection Tool 
 
 <img width="700" alt="indexhtml1" src="https://github.com/user-attachments/assets/043b6b4d-1ab0-4f75-8c91-a3ee1243615b" />
-
+---
 </div>
 
 ### The page
