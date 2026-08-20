@@ -15,6 +15,17 @@ Turn any Magic: The Gathering deck list — typed, pasted, dropped, or **scanned
 
 ---
 
+## Demo
+### Main Card Import
+
+1410x772
+
+<img width="1410" height="772" alt="indexhtml1" src="https://github.com/user-attachments/assets/d2011c81-446e-404a-b0a4-a4b641aa5f3f" />
+
+
+### The page
+
+
 ## Why this exists
 
 Proxy printers usually fail in the same two ways: the cards come out a few percent too small to sleeve alongside real ones, and the tool stops working the day its CDN changes a URL.
