@@ -17,7 +17,6 @@ Turn any Magic: The Gathering deck list — typed, pasted, dropped, or **scanned
 
 ## The page
 
-
 ## Why this exists
 
 Proxy printers usually fail in the same two ways: the cards come out a few percent too small to sleeve alongside real ones, and the tool stops working the day its CDN changes a URL.
@@ -27,6 +26,7 @@ Cardboard Golem fixes both by refusing to trust the browser with your geometry. 
 Everything else follows from that: one file, no build step, system fonts only, and a card cache that survives losing your internet connection.
 
 ---
+
 ```
 ┌──────────────────────────┬────────────────────────────────────┐
 │  🗿 CARDBOARD GOLEM      │  Cards 36 · Sheets 4 · Grid 3×3    │
@@ -57,7 +57,7 @@ Everything else follows from that: one file, no build step, system fonts only, a
 
 <img width="800" alt="image" src="https://github.com/user-attachments/assets/7d246a9d-7835-46ef-bb30-f5b79437ca6a" />
 
-
+---
 
 ## Demo
 
