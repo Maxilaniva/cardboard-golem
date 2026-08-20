@@ -1,6 +1,3 @@
-[README.md](https://github.com/user-attachments/files/31255277/README.md)
-<div align="center">
-
 # 🗿 Cardboard Golem
 
 **Assembled, not purchased.**
