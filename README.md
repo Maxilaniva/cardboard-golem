@@ -15,7 +15,7 @@ Turn any Magic: The Gathering deck list — typed, pasted, dropped, or **scanned
 
 ---
 
-## The page
+# The page
 
 ## Why this exists
 
@@ -117,7 +117,7 @@ If Scryfall ever answers with *"slow down"* instead of data, the app backs off, 
 
 ---
 
-## Features
+# Features
 
 **Print engine**
 - Hand-written PDF generator — no jsPDF, no libraries, exact millimetre placement
@@ -146,7 +146,7 @@ If Scryfall ever answers with *"slow down"* instead of data, the app backs off, 
 
 ---
 
-## Installation
+# Installation
 
 ```bash
 git clone https://github.com/Maxilaniva/cardboard-golem.git
@@ -179,7 +179,7 @@ The app detects all three and explains them in place, but serving over `localhos
 
 ---
 
-## One optional dependency
+# One optional dependency
 
 The core app has **zero runtime dependencies**. It loads no CDN, no webfont, no framework — open it with the network unplugged and everything works.
 
@@ -195,7 +195,7 @@ If you want a genuinely dependency-free file, delete the `OCR_CDN` constant and 
 
 ---
 
-## Configuration
+# Configuration
 
 Everything lives in the app UI and persists to `localStorage`. Sensible defaults mean you can ignore all of it.
 
@@ -217,7 +217,7 @@ Everything lives in the app UI and persists to `localStorage`. Sensible defaults
 
 ---
 
-## Known limits
+# Known limits
 
 Honesty beats surprises.
 
@@ -232,7 +232,7 @@ Honesty beats surprises.
 
 ---
 
-## Contributing
+# Contributing
 
 Issues and pull requests are welcome.
 
@@ -246,7 +246,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and the pre-PR checkli
 
 ---
 
-## License
+# License
 
 Code is [MIT licensed](LICENSE). Do what you like with it.
 
