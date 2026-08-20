@@ -15,7 +15,7 @@ Turn any Magic: The Gathering deck list into print-ready proxy sheets — at exa
 
 ---
 
-The two READMEs
+# The two READMEs
 
 They're genuinely different documents, not one hedged compromise:
 
