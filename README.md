@@ -30,7 +30,6 @@ Everything else follows from that: one file, no build step, system fonts only, a
 
 <img width="1412" height="760" alt="indexhtml1" src="https://github.com/user-attachments/assets/cd076c2f-d695-42be-95aa-2003842aa11c" />
 
-
 ### The page
 
 ```
