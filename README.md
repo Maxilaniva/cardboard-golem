@@ -23,6 +23,11 @@ Turn any Magic: The Gathering deck list — typed, pasted, dropped, or **scanned
 
 <img width="600" alt="indexhtml1" src="https://github.com/user-attachments/assets/41d53e9b-9ce3-410f-af29-5b04729ffc5d" />
 
+### Manual Search & Card Rules 
+
+<img width="600" alt="indexhtml1" src="https://github.com/user-attachments/assets/f2e82075-3dea-461c-9fb0-9ccfc8cb9f92" />
+
+
 </div>
 
 ### The page
