@@ -55,25 +55,29 @@ Everything else follows from that: one file, no build step, system fonts only, a
 └──────────────────────────┴────────────────────────────────────┘
 ```
 
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/7d246a9d-7835-46ef-bb30-f5b79437ca6a" />
+
+
+
 ## Demo
 
 <div align="center">
    
 ### Card Import
 
-<img width="700" alt="indexhtml1" src="https://github.com/user-attachments/assets/6e7c8d23-f49b-4387-b547-569e2f73aff6" />
+<img width="800" alt="indexhtml1" src="https://github.com/user-attachments/assets/6e7c8d23-f49b-4387-b547-569e2f73aff6" />
 
 ---
 
 ### Manual Search & Card Rules 
 
-<img width="700" alt="indexhtml1" src="https://github.com/user-attachments/assets/f2e82075-3dea-461c-9fb0-9ccfc8cb9f92" />
+<img width="800" alt="indexhtml1" src="https://github.com/user-attachments/assets/f2e82075-3dea-461c-9fb0-9ccfc8cb9f92" />
 
 ---
 
 ### Card Art Selection Tool 
 
-<img width="700" alt="indexhtml1" src="https://github.com/user-attachments/assets/043b6b4d-1ab0-4f75-8c91-a3ee1243615b" />
+<img width="800" alt="indexhtml1" src="https://github.com/user-attachments/assets/043b6b4d-1ab0-4f75-8c91-a3ee1243615b" />
 
 ---
 
