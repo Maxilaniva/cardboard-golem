@@ -19,11 +19,12 @@ The two READMEs
 
 They're genuinely different documents, not one hedged compromise:
 
-	README.md	README-professional.md
-Audience	Players browsing GitHub	Evaluators, contributors, enterprise
-Demo	ASCII layout sketch + Mermaid flowchart + 4-step table	Numbered procedure, no illustration
-Voice	"an unreasonable amount of respect for millimetres"	"Dimensional accuracy is non-negotiable"
-Extras	Collapsible explainers, badges	TOC, architecture map, browser matrix, roadmap, security statement
+|          | `README.md`                                            | `README-professional.md`                                        |
+| -------- | ------------------------------------------------------ | --------------------------------------------------------------- |
+| Audience | Players browsing GitHub                                 | Evaluators, contributors, enterprise                              |
+| Demo     | ASCII layout sketch + Mermaid flowchart + 4-step table  | Numbered procedure, no illustration                               |
+| Voice    | "an unreasonable amount of respect for millimetres"     | "Dimensional accuracy is non-negotiable"                          |
+| Extras   | Collapsible explainers, badges                          | TOC, architecture map, browser matrix, roadmap, security statement |
 
 ## Why this exists
 
