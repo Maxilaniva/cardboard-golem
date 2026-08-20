@@ -122,7 +122,7 @@ If Scryfall ever answers with *"slow down"* instead of data, the app backs off, 
 ## Installation
 
 ```bash
-git clone https://github.com/you/cardboard-golem.git
+git clone https://github.com/Maxilaniva/cardboard-golem.git
 cd cardboard-golem
 ```
 
