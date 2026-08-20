@@ -1,4 +1,4 @@
-<div align="center">
+<img width="1412" height="760" alt="indexhtml1" src="https://github.com/user-attachments/assets/da09efdc-b5d9-4292-a837-d29e070432b0" /><img width="1412" height="760" alt="indexhtml1" src="https://github.com/user-attachments/assets/abd4d5aa-aa77-4f9a-bfff-8a195de0683f" /><div align="center">
 
 # 🗿 Cardboard Golem
 
@@ -28,7 +28,8 @@ Everything else follows from that: one file, no build step, system fonts only, a
 ## Demo
 ### Main Card Import
 
-![Uploading indexhtml1.gif…]()
+<img width="1412" height="760" alt="indexhtml1" src="https://github.com/user-attachments/assets/cd076c2f-d695-42be-95aa-2003842aa11c" />
+
 
 ### The page
 
