@@ -24,14 +24,6 @@ Cardboard Golem fixes both by refusing to trust the browser with your geometry. 
 Everything else follows from that: one file, no build step, system fonts only, and a card cache that survives losing your internet connection.
 
 ---
-
-## Demo
-### Main Card Import
-
-
-
-### The page
-
 ```
 ┌──────────────────────────┬────────────────────────────────────┐
 │  🗿 CARDBOARD GOLEM      │  Cards 36 · Sheets 4 · Grid 3×3    │
