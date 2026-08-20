@@ -20,19 +20,46 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
----
-
+================================================================================
 NOTE ON SCOPE
+================================================================================
 
 The MIT license above applies to the source code of this project only.
 
+--- Third-party components -----------------------------------------------------
+
+This repository vendors no third-party code. One component is loaded at
+runtime by the optional camera OCR feature and is not covered by the license
+above:
+
+  Tesseract.js - Apache License 2.0
+  https://github.com/naptha/tesseract.js
+
+It is fetched from a CDN only when the user invokes camera scanning. Removing
+that feature removes the component entirely.
+
+--- Magic: The Gathering content -----------------------------------------------
+
 Magic: The Gathering card names, images, artwork, mana symbols, and Oracle
-text are the property of Wizards of the Coast LLC and are NOT covered by this license.
+text are the property of Wizards of the Coast LLC and are NOT covered by this
+license.
 
 Cardboard Golem is unofficial Fan Content permitted under the Wizards of the
 Coast Fan Content Policy. Not approved or endorsed by Wizards. Portions of the
 materials used are property of Wizards of the Coast. (c) Wizards of the Coast LLC.
 
+--- Card data ------------------------------------------------------------------
+
 Card data and imagery are provided by Scryfall (https://scryfall.com). This
 project is not produced by, endorsed by, supported by, or affiliated with
 Scryfall, LLC.
+
+Per Scryfall's API guidelines, this project does not paywall Scryfall data,
+does not place it behind accounts or subscriptions, and displays artist and
+source attribution alongside card imagery.
+
+--- Intended use ---------------------------------------------------------------
+
+Proxies produced by this software are for personal playtesting and casual
+play. They are not tournament legal. Producing proxies for sale is prohibited
+under the Fan Content Policy and constitutes copyright infringement.
