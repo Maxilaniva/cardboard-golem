@@ -1,4 +1,4 @@
-<img width="1412" height="760" alt="indexhtml1" src="https://github.com/user-attachments/assets/da09efdc-b5d9-4292-a837-d29e070432b0" /><img width="1412" height="760" alt="indexhtml1" src="https://github.com/user-attachments/assets/abd4d5aa-aa77-4f9a-bfff-8a195de0683f" /><div align="center">
+<div align="center">
 
 # 🗿 Cardboard Golem
 
@@ -18,10 +18,7 @@ Turn any Magic: The Gathering deck list — typed, pasted, dropped, or **scanned
 ## Demo
 ### Main Card Import
 
-1410x772
-
-<img width="1410" height="772" alt="indexhtml1" src="https://github.com/user-attachments/assets/d2011c81-446e-404a-b0a4-a4b641aa5f3f" />
-
+<img width="916" height="564" alt="indexhtml1" src="https://github.com/user-attachments/assets/41d53e9b-9ce3-410f-af29-5b04729ffc5d" />
 
 ### The page
 
