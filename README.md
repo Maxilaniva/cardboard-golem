@@ -18,11 +18,13 @@ Turn any Magic: The Gathering deck list — typed, pasted, dropped, or **scanned
 ## Demo
 
 <div align="center">
+   
 ### Main Card Import
 
 <img width="600" alt="indexhtml1" src="https://github.com/user-attachments/assets/41d53e9b-9ce3-410f-af29-5b04729ffc5d" />
 
-</dib>
+</div>
+
 ### The page
 
 
